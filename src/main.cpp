@@ -202,6 +202,13 @@
   #define PIN_BUSY 4
   #define ePaperPowerPin 2
 
+#elif defined EPDIY_V7
+  #define PIN_SS 5
+  #define PIN_DC 17
+  #define PIN_RST 16
+  #define PIN_BUSY 4
+  #define ePaperPowerPin 2
+
 #else
   #error "Board not defined!"
 #endif
@@ -254,8 +261,13 @@ static const char *defined_color_type = "7C";
 // BW
 ///////////////////////
 
+
+#ifdef D_FASTEPD
+#include <FastEPD.h>
+FASTEPD display;
+
 // GDEW0154T8 - BW, 152x152px, 1.54"
-#ifdef D_GDEW0154T8
+#elif defined D_GDEW0154T8
 GxEPD2_BW<GxEPD2_154_T8, GxEPD2_154_T8::HEIGHT> display(GxEPD2_154_T8(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
 
 // GDEY027T91 - BW, 176x264px, 2.7"
@@ -555,8 +567,11 @@ uint64_t deepSleepTime = defaultDeepSleepTime; // actual sleep time in minutes, 
 
 /*-------------- ePaper resolution -------------- */
 // Get display width from selected display class
-#define DISPLAY_RESOLUTION_X display.epd2.WIDTH
-#define DISPLAY_RESOLUTION_Y display.epd2.HEIGHT
+#define DISPLAY_RESOLUTION_X 1600
+#define DISPLAY_RESOLUTION_Y 1200
+
+// #define DISPLAY_RESOLUTION_X display.epd2.WIDTH
+// #define DISPLAY_RESOLUTION_Y display.epd2.HEIGHT
 /* ---------------------------------------------- */
 
 /* variables */
@@ -752,22 +767,14 @@ void drawQrCode(const char *qrStr, int qrSize, int yCord, int xCord, byte qrSize
   }
 }
 
-void setTextPos(const String &text, int xCord, int yCord)
-{
-  int16_t x1, y1;
-  uint16_t w, h;
-  display.getTextBounds(text.c_str(), 0, 0, &x1, &y1, &w, &h);
-  display.setCursor(xCord, (yCord + (h / 2)));
-  display.print(text);
-}
-
 void centeredText(const String &text, int xCord, int yCord)
 {
   int16_t x1, y1;
   uint16_t w, h;
-  display.getTextBounds(text.c_str(), 0, 0, &x1, &y1, &w, &h);
-  display.setCursor(xCord - (w / 2), (yCord + (h / 2)));
-  display.println(text);
+  // display.getTextBounds(text.c_str(), 0, 0, &x1, &y1, &w, &h);
+  // display.setCursor(xCord - (w / 2), (yCord + (h / 2)));
+  // display.println(text);
+  display.drawString(text.c_str(), xCord, yCord);
 }
 
 void displayInit()
@@ -781,11 +788,11 @@ void displayInit()
 #if (defined ES3ink) || (defined ESP32S3Adapter) || (defined ESPink_V3)
   display.init(115200, true, 2, false); // USE THIS for Waveshare boards with "clever" reset circuit, 2ms reset pulse
 #else
-  display.init();
+  // display.init();
 #endif
   display.setRotation(0);
-  display.fillScreen(GxEPD_WHITE); // white background
-  display.setTextColor(GxEPD_BLACK); // black font
+  // display.fillScreen(GxEPD_WHITE); // white background
+  // display.setTextColor(GxEPD_BLACK); // black font
 }
 
 // This is called if the WifiManager is in config mode (AP open)
@@ -811,149 +818,152 @@ void configModeCallback(WiFiManager *myWiFiManager)
 
   timestamp = 0; // set timestamp to 0 to force update because we changed screen to this info
 
-  displayInit();
-  setEPaperPowerOn(true);
+  // displayInit();
+  // setEPaperPowerOn(true);
   delay(500);
 
-  display.setFullWindow();
-  display.firstPage();
-  do
+  // display.setFullWindow();
+  // display.firstPage();
+  // do
+  // {
+  if (DISPLAY_RESOLUTION_X >= 800)
   {
-    if (DISPLAY_RESOLUTION_X >= 800)
+    display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 90, 0xf);
+    // display.setTextColor(0xf);
+    // display.setFont(&OpenSansSB_24px);
+    centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 28);
+    // display.setFont(&OpenSansSB_18px);
+    centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 64);
+    // display.setTextColor(GxEPD_BLACK);
+    centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 120);
+    centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 145);
+    centeredText("1) Connect to this AP:", DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) - 50);
+    centeredText("2) Open in web browser:", DISPLAY_RESOLUTION_X * 3 / 4, (DISPLAY_RESOLUTION_Y / 2) - 50);
+
+    drawQrCode(qrString.c_str(), 4, (DISPLAY_RESOLUTION_Y / 2) + 40, DISPLAY_RESOLUTION_X / 4, 4);
+    display.drawLine(DISPLAY_RESOLUTION_X / 2 - 1, (DISPLAY_RESOLUTION_Y / 2) - 60, DISPLAY_RESOLUTION_X / 2 - 1, (DISPLAY_RESOLUTION_Y / 2) + 170, GxEPD_BLACK);
+    display.drawLine(DISPLAY_RESOLUTION_X / 2, (DISPLAY_RESOLUTION_Y / 2) - 60, DISPLAY_RESOLUTION_X / 2, (DISPLAY_RESOLUTION_Y / 2) + 170, GxEPD_BLACK);
+    drawQrCode(urlWeb.c_str(), 4, (DISPLAY_RESOLUTION_Y / 2) + 40, DISPLAY_RESOLUTION_X * 3 / 4, 4);
+
+    centeredText("SSID: " + hostname, DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) + 130);
+    centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) + 155);
+    centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, (DISPLAY_RESOLUTION_Y / 2) + 130);
+    display.fillRect(0, DISPLAY_RESOLUTION_Y - 40, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
+    // display.setTextColor(GxEPD_WHITE);
+    centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 22);
+  }
+  else if (DISPLAY_RESOLUTION_X >= 600)
+  {
+    display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 70, GxEPD_BLACK);
+    // display.setTextColor(GxEPD_WHITE);
+    // display.setFont(&OpenSansSB_20px);
+    centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 20);
+    // display.setFont(&OpenSansSB_14px);
+    centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 50);
+    // display.setTextColor(GxEPD_BLACK);
+    centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 90);
+    centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 110);
+    centeredText("1) Connect to this AP:", DISPLAY_RESOLUTION_X / 4, 140);
+    centeredText("2) Open in web browser:", DISPLAY_RESOLUTION_X * 3 / 4, 140);
+
+    drawQrCode(qrString.c_str(), 4, 225, DISPLAY_RESOLUTION_X / 4 + 18, 3);
+    display.drawLine(DISPLAY_RESOLUTION_X / 2 - 1, 135, DISPLAY_RESOLUTION_X / 2 - 1, 310, GxEPD_BLACK);
+    display.drawLine(DISPLAY_RESOLUTION_X / 2, 135, DISPLAY_RESOLUTION_X / 2, 310, GxEPD_BLACK);
+    drawQrCode(urlWeb.c_str(), 4, 225, DISPLAY_RESOLUTION_X * 3 / 4 + 18, 3);
+
+    centeredText("SSID: " + hostname, DISPLAY_RESOLUTION_X / 4, 280);
+    centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, 300);
+    centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, 280);
+    display.fillRect(0, DISPLAY_RESOLUTION_Y - 36, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
+    // display.setTextColor(GxEPD_WHITE);
+    centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 24);
+  }
+  else if (DISPLAY_RESOLUTION_X >= 400)
+  {
+    display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 58, GxEPD_BLACK);
+    // display.setTextColor(GxEPD_WHITE);
+    // display.setFont(&OpenSansSB_16px);
+    centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 16);
+    // display.setFont(&OpenSansSB_14px);
+    centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 40);
+    // display.setTextColor(GxEPD_BLACK);
+    centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 72);
+    centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 92);
+    centeredText("1) Connect to AP", DISPLAY_RESOLUTION_X / 4, 115);
+    centeredText("2) Open in browser:", DISPLAY_RESOLUTION_X * 3 / 4, 115);
+
+    drawQrCode(qrString.c_str(), 3, 190, DISPLAY_RESOLUTION_X / 4 + 18, 3);
+    display.drawLine(DISPLAY_RESOLUTION_X / 2 + 2, 108, DISPLAY_RESOLUTION_X / 2 + 2, 260, GxEPD_BLACK);
+    display.drawLine(DISPLAY_RESOLUTION_X / 2 + 3, 108, DISPLAY_RESOLUTION_X / 2 + 3, 260, GxEPD_BLACK);
+    drawQrCode(urlWeb.c_str(), 3, 190, DISPLAY_RESOLUTION_X * 3 / 4 + 18, 3);
+
+    centeredText("AP: " + hostname, DISPLAY_RESOLUTION_X / 4, 232);
+    centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, 250);
+    centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, 232);
+    display.fillRect(0, DISPLAY_RESOLUTION_Y - 25, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
+    // display.setTextColor(GxEPD_WHITE);
+    centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 15);
+  }
+  else
+  {
+    // Initialize defined resolution into variables for possible swap later
+    uint16_t small_resolution_x = DISPLAY_RESOLUTION_X;
+    uint16_t small_resolution_y = DISPLAY_RESOLUTION_Y;
+
+    // Use landscape mode - many small displays are in portrait mode
+    if (DISPLAY_RESOLUTION_X < DISPLAY_RESOLUTION_Y)
     {
-      display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 90, GxEPD_BLACK);
-      display.setTextColor(GxEPD_WHITE);
-      display.setFont(&OpenSansSB_24px);
-      centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 28);
-      display.setFont(&OpenSansSB_18px);
-      centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 64);
-      display.setTextColor(GxEPD_BLACK);
-      centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 120);
-      centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 145);
-      centeredText("1) Connect to this AP:", DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) - 50);
-      centeredText("2) Open in web browser:", DISPLAY_RESOLUTION_X * 3 / 4, (DISPLAY_RESOLUTION_Y / 2) - 50);
+      display.setRotation(3);
 
-      drawQrCode(qrString.c_str(), 4, (DISPLAY_RESOLUTION_Y / 2) + 40, DISPLAY_RESOLUTION_X / 4, 4);
-      display.drawLine(DISPLAY_RESOLUTION_X / 2 - 1, (DISPLAY_RESOLUTION_Y / 2) - 60, DISPLAY_RESOLUTION_X / 2 - 1, (DISPLAY_RESOLUTION_Y / 2) + 170, GxEPD_BLACK);
-      display.drawLine(DISPLAY_RESOLUTION_X / 2, (DISPLAY_RESOLUTION_Y / 2) - 60, DISPLAY_RESOLUTION_X / 2, (DISPLAY_RESOLUTION_Y / 2) + 170, GxEPD_BLACK);
-      drawQrCode(urlWeb.c_str(), 4, (DISPLAY_RESOLUTION_Y / 2) + 40, DISPLAY_RESOLUTION_X * 3 / 4, 4);
-
-      centeredText("SSID: " + hostname, DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) + 130);
-      centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) + 155);
-      centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, (DISPLAY_RESOLUTION_Y / 2) + 130);
-      display.fillRect(0, DISPLAY_RESOLUTION_Y - 40, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
-      display.setTextColor(GxEPD_WHITE);
-      centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 22);
+      // Swap resolution for X and Y
+      small_resolution_x = DISPLAY_RESOLUTION_Y;
+      small_resolution_y = DISPLAY_RESOLUTION_X;
     }
-    else if (DISPLAY_RESOLUTION_X >= 600)
-    {
-      display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 70, GxEPD_BLACK);
-      display.setTextColor(GxEPD_WHITE);
-      display.setFont(&OpenSansSB_20px);
-      centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 20);
-      display.setFont(&OpenSansSB_14px);
-      centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 50);
-      display.setTextColor(GxEPD_BLACK);
-      centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 90);
-      centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 110);
-      centeredText("1) Connect to this AP:", DISPLAY_RESOLUTION_X / 4, 140);
-      centeredText("2) Open in web browser:", DISPLAY_RESOLUTION_X * 3 / 4, 140);
 
-      drawQrCode(qrString.c_str(), 4, 225, DISPLAY_RESOLUTION_X / 4 + 18, 3);
-      display.drawLine(DISPLAY_RESOLUTION_X / 2 - 1, 135, DISPLAY_RESOLUTION_X / 2 - 1, 310, GxEPD_BLACK);
-      display.drawLine(DISPLAY_RESOLUTION_X / 2, 135, DISPLAY_RESOLUTION_X / 2, 310, GxEPD_BLACK);
-      drawQrCode(urlWeb.c_str(), 4, 225, DISPLAY_RESOLUTION_X * 3 / 4 + 18, 3);
+    display.fillRect(0, 0, small_resolution_x, 34, GxEPD_BLACK);
+    // display.setTextColor(GxEPD_WHITE);
+    // display.setFont(&OpenSansSB_14px);
+    centeredText("No Wi-Fi setup OR connection", small_resolution_x / 2, 6);
+    centeredText("Retries in a few minutes if lost.", small_resolution_x / 2, 25);
+    // display.setTextColor(GxEPD_BLACK);
+    // setTextPos("Setup or change cfg:", 2, 44);
+    // setTextPos("AP: ..." + hostname.substring(hostname.length() - 6), 2, 64);
+    // setTextPos("Password: " + wifiPassword, 2, 84);
+    // setTextPos("Help: zivyobraz.eu ", 2, 104);
 
-      centeredText("SSID: " + hostname, DISPLAY_RESOLUTION_X / 4, 280);
-      centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, 300);
-      centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, 280);
-      display.fillRect(0, DISPLAY_RESOLUTION_Y - 36, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
-      display.setTextColor(GxEPD_WHITE);
-      centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 24);
-    }
-    else if (DISPLAY_RESOLUTION_X >= 400)
-    {
-      display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 58, GxEPD_BLACK);
-      display.setTextColor(GxEPD_WHITE);
-      display.setFont(&OpenSansSB_16px);
-      centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 16);
-      display.setFont(&OpenSansSB_14px);
-      centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 40);
-      display.setTextColor(GxEPD_BLACK);
-      centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 72);
-      centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 92);
-      centeredText("1) Connect to AP", DISPLAY_RESOLUTION_X / 4, 115);
-      centeredText("2) Open in browser:", DISPLAY_RESOLUTION_X * 3 / 4, 115);
+    drawQrCode(qrString.c_str(), 3, 93, small_resolution_x - 28, 3);
+  }
+  // } while (false);
 
-      drawQrCode(qrString.c_str(), 3, 190, DISPLAY_RESOLUTION_X / 4 + 18, 3);
-      display.drawLine(DISPLAY_RESOLUTION_X / 2 + 2, 108, DISPLAY_RESOLUTION_X / 2 + 2, 260, GxEPD_BLACK);
-      display.drawLine(DISPLAY_RESOLUTION_X / 2 + 3, 108, DISPLAY_RESOLUTION_X / 2 + 3, 260, GxEPD_BLACK);
-      drawQrCode(urlWeb.c_str(), 3, 190, DISPLAY_RESOLUTION_X * 3 / 4 + 18, 3);
-
-      centeredText("AP: " + hostname, DISPLAY_RESOLUTION_X / 4, 232);
-      centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, 250);
-      centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, 232);
-      display.fillRect(0, DISPLAY_RESOLUTION_Y - 25, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
-      display.setTextColor(GxEPD_WHITE);
-      centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 15);
-    }
-    else
-    {
-      // Initialize defined resolution into variables for possible swap later
-      uint16_t small_resolution_x = DISPLAY_RESOLUTION_X;
-      uint16_t small_resolution_y = DISPLAY_RESOLUTION_Y;
-
-      // Use landscape mode - many small displays are in portrait mode
-      if (DISPLAY_RESOLUTION_X < DISPLAY_RESOLUTION_Y)
-      {
-        display.setRotation(3);
-
-        // Swap resolution for X and Y
-        small_resolution_x = DISPLAY_RESOLUTION_Y;
-        small_resolution_y = DISPLAY_RESOLUTION_X;
-      }
-
-      display.fillRect(0, 0, small_resolution_x, 34, GxEPD_BLACK);
-      display.setTextColor(GxEPD_WHITE);
-      display.setFont(&OpenSansSB_14px);
-      centeredText("No Wi-Fi setup OR connection", small_resolution_x / 2, 6);
-      centeredText("Retries in a few minutes if lost.", small_resolution_x / 2, 25);
-      display.setTextColor(GxEPD_BLACK);
-      setTextPos("Setup or change cfg:", 2, 44);
-      setTextPos("AP: ..." + hostname.substring(hostname.length() - 6), 2, 64);
-      setTextPos("Password: " + wifiPassword, 2, 84);
-      setTextPos("Help: zivyobraz.eu ", 2, 104);
-
-      drawQrCode(qrString.c_str(), 3, 93, small_resolution_x - 28, 3);
-    }
-  } while (display.nextPage());
-
-  setEPaperPowerOn(false);
+  // setEPaperPowerOn(false);
+  display.fullUpdate();
 }
 
 void displayNoWiFiError()
 {
   timestamp = 0; // set timestamp to 0 to force update because we changed screen to this info
 
-  displayInit();
-  setEPaperPowerOn(true);
-  delay(500);
+  // displayInit();
+  // setEPaperPowerOn(true);
+  // delay(500);
 
-  display.setFullWindow();
-  display.firstPage();
-  do
-  {
-      display.fillRect(0, 0, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_WHITE);
-      display.setTextColor(GxEPD_BLACK);
-      display.setFont(&OpenSansSB_20px);
-      centeredText("Cannot connect to Wi-Fi", DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y / 2 - 15);
-      display.setFont(&OpenSansSB_16px);
-      centeredText("Retries in a " + String(deepSleepTime) + " minutes.", DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y / 2 + 15);
-      display.setFont(&OpenSansSB_14px);
-      centeredText("Docs: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 20);
-  } while (display.nextPage());
+  // display.setFullWindow();
+  // display.firstPage();
+  // do
+  // {
+  display.fillRect(0, 0, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, 0xf);
+  // display.setTextColor(0x0, 0xf);
+  // display.setFont(&OpenSansSB_20px);
+  centeredText("Cannot connect to Wi-Fi", DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y / 2 - 15);
+  // display.setFont(&OpenSansSB_16px);
+  centeredText("Retries in a " + String(deepSleepTime) + " minutes.", DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y / 2 + 15);
+  // display.setFont(&OpenSansSB_14px);
+  centeredText("Docs: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 20);
+  // } while (false);
+  // } while (display.nextPage());
 
-  setEPaperPowerOn(false);
+  // setEPaperPowerOn(false);
+  display.fullUpdate();
 }
 
 void WiFiInit()
@@ -1058,8 +1068,10 @@ bool createHttpRequest(WiFiClient &client, bool &connStatus, bool checkTimestamp
                "&rssi=" + String(rssi) +
                "&ssid=" + ssid +
                "&v=" + String(d_volt) +
-               "&x=" + String(DISPLAY_RESOLUTION_X) +
-               "&y=" + String(DISPLAY_RESOLUTION_Y) +
+               "&x=" + String(1600) +
+               "&y=" + String(1200) +
+              //  "&x=" + String(DISPLAY_RESOLUTION_X) +
+              //  "&y=" + String(DISPLAY_RESOLUTION_Y) +
                "&c=" + String(defined_color_type) +
                "&fw=" + String(firmware) +
                "&ap_retries=" + String(notConnectedToAPCount) +
@@ -1297,8 +1309,9 @@ void readBitmapData(WiFiClient &client)
   static const uint16_t max_row_width = 1872; // for up to 7.8" display 1872x1404
   static const uint16_t max_palette_pixels = 256; // for depth <= 8
 
-  int16_t x = display.width() - DISPLAY_RESOLUTION_X;
-  int16_t y = display.height() - DISPLAY_RESOLUTION_Y;
+  // int16_t x = display.width() - DISPLAY_RESOLUTION_X;
+  // int16_t y = display.height() - DISPLAY_RESOLUTION_Y;
+  int16_t x = 0, y = 0;
 
   uint8_t input_buffer[3 * input_buffer_pixels]; // up to depth 24
   uint8_t output_row_mono_buffer[max_row_width / 8]; // buffer for at least one row of b/w bits
@@ -1311,23 +1324,6 @@ void readBitmapData(WiFiClient &client)
   bool with_color = false;
   bool has_multicolors = false;
   bool grayscale = false;
-
-#ifdef TYPE_GRAYSCALE
-  with_color = true;
-  has_multicolors = false;
-  grayscale = true;
-
-#elif defined TYPE_3C
-  with_color = true;
-  has_multicolors = false;
-  grayscale = false;
-
-#elif (defined TYPE_4C) || (defined TYPE_7C)
-  with_color = true;
-  has_multicolors = true;
-  grayscale = false;
-
-#endif
 
   bool connection_ok = false;
   bool valid = false; // valid format to be handled
@@ -1552,15 +1548,15 @@ void readBitmapData(WiFiClient &client)
             }
             else if (whitish)
             {
-              color = GxEPD_WHITE;
+              color = 0xf;
             }
             else if (grayscale && lightgrey)
             {
-              color = GxEPD_LIGHTGREY;
+              color = 0x9;
             }
             else if (grayscale && darkgrey)
             {
-              color = GxEPD_DARKGREY;
+              color = 0x6;
             }
             else if (colored && with_color)
             {
@@ -1568,15 +1564,16 @@ void readBitmapData(WiFiClient &client)
             }
             else
             {
-              color = GxEPD_BLACK;
+              color = 0x0;
             }
 
             uint16_t yrow = y + (flip ? h - row - 1 : row);
-            display.drawPixel(x + col, yrow, color);
+            display.drawPixelFast(x + col, yrow, color);  // DRAWING HERE
+            Serial.println(color);
           } // end col
         } // end row
+        display.fullUpdate();
       } // end block
-
       Serial.print("bytes read ");
       Serial.println(bytes_read);
     }
@@ -1584,7 +1581,7 @@ void readBitmapData(WiFiClient &client)
   else if (header == 0x315A || header == 0x325A || header == 0x335A) // ZivyObraz RLE data Z1 or Z3
   {
     // Z1 - 1 byte for color, 1 byte for number of repetition
-    // Z3 - 2 bits for color, 6 bits for number of repetition
+    // Z2 - 2 bits for color, 6 bits for number of repetition
     // Z3 - 3 bits for color, 5 bits for number of repetition
     if (header == 0x315A) Serial.println("Got format Z1, processing");
     else if (header == 0x325A) Serial.println("Got format Z2, processing");
@@ -1594,17 +1591,17 @@ void readBitmapData(WiFiClient &client)
     uint16_t w = display.width();
     uint16_t h = display.height();
     uint8_t pixel_color, count, compressed;
-    uint16_t color;
+    uint16_t color = 0x1;
     valid = true;
 
-    uint16_t color2 = GxEPD_RED;
-    uint16_t color3 = GxEPD_YELLOW;
+    uint16_t color2 = 0x10;
+    uint16_t color3 = 0x4;
 
 #if (defined TYPE_BW) || (defined TYPE_GRAYSCALE)
-    color2 = GxEPD_LIGHTGREY;
-    color3 = GxEPD_DARKGREY;
+    color2 = 0x10;
+    color3 = 0x4;
 #endif
-
+    display.fillScreen(0xf);
     for (uint16_t row = 0; row < h; row++) // for each line
     {
       if (!connection_ok || !(client.connected() || client.available())) break;
@@ -1671,57 +1668,60 @@ void readBitmapData(WiFiClient &client)
           bytes_read++;
         }
 
-        switch (pixel_color)
-        {
-          case 0x0:
-            color = GxEPD_WHITE;
-            break;
-          case 0x1:
-            color = GxEPD_BLACK;
-            break;
-          case 0x2:
-            color = color2;
-            break;
-          case 0x3:
-            color = color3;
-            break;
-#ifdef TYPE_7C
-          case 0x4:
-            color = GxEPD_GREEN;
-            break;
-          case 0x5:
-            color = GxEPD_BLUE;
-            break;
-          case 0x6:
-            color = GxEPD_ORANGE;
-            break;
-#endif
-        }
+//         switch (pixel_color)
+//         {
+//           case 0x0:
+//             color = 0xc;
+//             break;
+//           case 0x1:
+//             color = 0x2;
+//             break;
+//           case 0x2:
+//             color = 0x6;
+//             break;
+//           case 0x3:
+//             color = 0x9;
+//             break;
+// #ifdef TYPE_7C
+//           case 0x4:
+//             color = GxEPD_GREEN;
+//             break;
+//           case 0x5:
+//             color = GxEPD_BLUE;
+//             break;
+//           case 0x6:
+//             color = GxEPD_ORANGE;
+//             break;
+// #endif
+//         }
 
         // Debug
-        /*
-        if (bytes_read < 20)
-        {
-          Serial.print("count: "); Serial.print(count); Serial.print(" pixel: "); Serial.println(color);
+        if (pixel_color == 1) {
+          color = 0xf;
+        } else {
+          color = 0x0;
         }
-        /* */
+
+        // if (color != 0)
+        // {
+        //   Serial.print("count: "); Serial.print(count); Serial.print(" pixel: "); Serial.println(color);
+        // }
 
         for (uint8_t i = 0; i < count - 1; i++)
         {
           yield();
 
-          display.drawPixel(col, row, color);
-
+          display.drawPixelFast(col, row, color);
           if ((count > 1) && (++col == w))
           {
             col = 0;
             row++;
           }
         }
-
-        display.drawPixel(col, row, color);
+        display.drawPixelFast(col, row, color);
       } // end col
     } // end row
+    display.fullUpdate();
 
     Serial.print("bytes read ");
     Serial.println(bytes_read);
@@ -1741,10 +1741,33 @@ void readBitmapData(WiFiClient &client)
   }
 }
 
+void testDraw()
+{
+  for (int row = 0; row < 1200; row++) {
+    for (int col = 0; col < 1200; col++) {
+      if (abs(row - col) < 50) {
+        display.drawPixelFast(row, col, 0x0);
+      }
+    }
+  }
+}
+
 void setup()
 {
+#ifdef D_FASTEPD
+  display.initPanel(BB_PANEL_EPDIY_V7);
+  display.setPanelSize(1600, 1200);
+  display.setMode(BB_MODE_4BPP);
+  display.fillScreen(0xf);  // some gray...
+  // testDraw();
+  // display.drawString("ahoj", 500, 100);
+  // display.fullUpdate();
+  // delay(1000);
+
+#endif  // D_FASTEPD
   Serial.begin(115200);
   Serial.println("Starting firmware for Zivy Obraz service");
+  // return;
 
 #ifdef ES3ink
   // Battery voltage reading via PMOS switch with series capacitor to gate.
@@ -1771,17 +1794,21 @@ void setup()
 #endif
 
 #ifndef M5StackCoreInk
-  pinMode(ePaperPowerPin, OUTPUT);
+  // pinMode(ePaperPowerPin, OUTPUT);
 #endif
 
   // ePaper init
-  displayInit();
+  // displayInit();
 
   // Battery voltage measurement
   d_volt = getBatteryVoltage();
 
   // Wifi init
+  // display.fullUpdate();
   WiFiInit();
+  // display.fullUpdate();
+  Serial.println("After wifiinit");
+  Serial.println("##################");
 
   // WiFi strength - so you will know how good your signal is
   rssi = getWifiStrength();
@@ -1799,23 +1826,22 @@ void setup()
     if (checkForNewTimestampOnServer(client))
     {
       // Enable power supply for ePaper
-      setEPaperPowerOn(true);
+      // setEPaperPowerOn(true);
       delay(500);
 
       // Get that lovely bitmap and put it on your gorgeous grayscale ePaper screen!
 
       // If you can't use whole display at once, there will be multiple pages and therefore
       // requests and downloads of one bitmap from server, since you have to always write whole image
-      display.setFullWindow();
-      display.firstPage();
-      do
-      {
-        readBitmapData(client);
-      } while (display.nextPage());
+      // display.setFullWindow();
+      // display.firstPage();
+
+      timestamp = 0;
+      readBitmapData(client);
 
       delay(100);
       // Disable power supply for ePaper
-      setEPaperPowerOn(false);
+      // setEPaperPowerOn(false);
     }
 
   #ifdef ES3ink
@@ -1857,7 +1883,7 @@ void setup()
   display.powerOff();
   M5.shutdown(deepSleepTime * 60);
 #else
-  esp_sleep_enable_timer_wakeup(deepSleepTime * 60 * 1000000);
+  esp_sleep_enable_timer_wakeup(deepSleepTime * 5 * 1000000);  // 5 seconds
   delay(100);
   esp_deep_sleep_start();
 #endif
@@ -1865,4 +1891,6 @@ void setup()
 
 void loop()
 {
+  Serial.println("test");
+  delay(1000);
 }

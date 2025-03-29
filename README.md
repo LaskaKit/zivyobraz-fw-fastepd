@@ -1,4 +1,11 @@
-# Živý obraz - firmware
+# WORK IN PROGRESS
+
+A fork of zivyobraz-fw based on FastEPD library for controlling E-Paper displays with paralel interface.
+
+epdiy_v7 + ED133UT3
+
+
+<!-- # Živý obraz - firmware
 
 Vítejte v repozitáři projektu Živý obraz s firmwarem pro vývojové desky založené na ESP32/ESP32-S3. Živý obraz slouží pro krmení ePaper/e-Ink displejů obrazovými daty z webového serveru ať už jde o bitmapu nebo o vlastní formát.
 
@@ -36,4 +43,4 @@ V kódu _**main.cpp**_ nezapomeňte odkomentovat:
 > #define D_GDEW075T7     // 800x480, 7.5"  
 
 Po úspěšní kompilaci a flashnutí desky pokračujte v dokumentaci "Oživení vlastního ePaperu":  
-https://wiki.zivyobraz.eu/doku.php?id=start#oziveni_vlastniho_epaperu
+https://wiki.zivyobraz.eu/doku.php?id=start#oziveni_vlastniho_epaperu -->
