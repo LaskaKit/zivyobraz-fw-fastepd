@@ -151,7 +151,9 @@
   #error "Board not defined!"
 #endif
 
+
 #include <FastEPD.h>
+#include <fonts/OpenSansSB_24px.h>
 FASTEPD display;
 
 ////////////////////////////
@@ -480,7 +482,7 @@ void configModeCallback(WiFiManager *myWiFiManager)
 
   display.clearWhite();
   display.setTextColor(BBEP_BLACK);
-  // display.setFont(&OpenSansSB_24px);
+  display.setFont(&OpenSansSB_24px);
 
   centeredText("No Wi-Fi configured OR connection lost", display.width() / 2, 28);
   centeredText("Retries in a few minutes if lost.", display.width() / 2, 64);
@@ -498,7 +500,7 @@ void configModeCallback(WiFiManager *myWiFiManager)
   centeredText("Password: " + wifiPassword, display.width() / 4, (display.height() / 2) + 155);
   centeredText(urlWeb, display.width() * 3 / 4, (display.height() / 2) + 130);
 
-  display.fillRect(0, display.height() - 40, display.width(), 40, 0x0);
+  display.fillRect(0, display.height() - 50, display.width(), 50, 0x0);
   display.setTextColor(0xf);
   centeredText("Documentation: " + urlWiki, display.width() / 2, display.height() - 22);
 
@@ -510,14 +512,7 @@ void displayNoWiFiError()
 {
   timestamp = 0; // set timestamp to 0 to force update because we changed screen to this info
 
-  // displayInit();
-  // setEPaperPowerOn(true);
-  // delay(500);
-
-  // display.setFullWindow();
-  // display.firstPage();
-  // do
-  // {
+  delay(500); 
   display.fillRect(0, 0, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, 0xf);
   // display.setTextColor(0x0, 0xf);
   // display.setFont(&OpenSansSB_20px);
@@ -526,10 +521,7 @@ void displayNoWiFiError()
   centeredText("Retries in a " + String(deepSleepTime) + " minutes.", DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y / 2 + 15);
   // display.setFont(&OpenSansSB_14px);
   centeredText("Docs: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 20);
-  // } while (false);
-  // } while (display.nextPage());
-
-  // setEPaperPowerOn(false);
+ 
   display.fullUpdate();
 }
 
