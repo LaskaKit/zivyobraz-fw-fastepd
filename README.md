@@ -15,6 +15,7 @@ Can display Z2 compressed images from zivyobraz.eu.
 
 
 NOTE: you need to add custom board definition for epdiy_v7 to platformio to compile and flash successfuly.
+      Just place `epdiy_v7.json` into `~/.platformio/boards/`
 
 
 <!-- # Živý obraz - firmware
