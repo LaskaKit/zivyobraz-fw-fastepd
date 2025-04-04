@@ -1,8 +1,20 @@
-# WORK IN PROGRESS
-
 A fork of zivyobraz-fw based on FastEPD library for controlling E-Paper displays with paralel interface.
 
-epdiy_v7 + ED133UT3
+Original repository is at: https://github.com/MultiTricker/zivyobraz-fw
+
+
+# WORK IN PROGRESS
+
+Our setup: epdiy_v7 + ED133UT3
+
+
+# Status
+
+Configuration via AP is working.
+Can display Z2 compressed images from zivyobraz.eu.
+
+
+NOTE: you need to add custom board definition for epdiy_v7 to platformio to compile and flash successfuly.
 
 
 <!-- # Živý obraz - firmware
