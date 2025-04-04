@@ -56,68 +56,6 @@
 //#define TYPE_GRAYSCALE // grayscale - 4 colors
 //#define TYPE_7C // 7 colors
 
-//////////////////////////////////////////////////////////////
-// Uncomment for correct ePaper you have
-//////////////////////////////////////////////////////////////
-
-// BW
-//#define D_GDEW0154T8    // 152x152, 1.54"
-//#define D_GDEY027T91    // 176x264, 2.7"
-//#define D_GDEY029T94    // 128x296, 2.9"
-//#define D_GDEY029T71H   // 168x384, 2.9"
-//#define D_GDEQ031T10    // 240x320, 3.1"
-//#define D_GDEQ042T81    // 400x300, 4.2"
-//#define D_GDEY0579T93   // 792x272, 5.79"
-//#define D_GDEQ0583T31   // 648x480, 5.83"
-//#define D_WS75BWT7      // 800x480, 7.5"
-//#define D_GDEW075T7     // 800x480, 7.5"
-//#define D_GDEY075T7BW   // 800x480, 7.5"
-//#define D_GDEM102T91    // 960x640, 10.2"
-//#define D_GDEM1085T51   // 1360x480, 10.85"
-//#define D_GDEM133T91    // 960x680, 13.3"
-
-// Grayscale
-//#define D_GDEY0154D67   // 200x200, 1.54"
-//#define D_GDEY0213B74   // 128x250, 2.13"
-//#define D_GDEW042T2_G   // 400x300, 4.2"
-//#define D_GDEY042T81    // 400x300, 4.2"
-//#define D_GDEQ0426T82   // 800x480, 4.26"
-//#define D_GDEY075T7     // 800x480, 7.5"
-
-// 3C
-//#define D_GDEY0154Z90   // 200x200, 1.54"
-//#define D_WS42YBW400300 // 400x300, 4.2"
-//#define D_GDEQ042Z21    // 400x300, 4.2"
-//#define D_GDEY042Z98    // 400x300, 4.2"
-//#define D_HINK_E075A01  // 640x384, 7.5"
-//#define D_GDEY0579Z93   // 792x272, 5.79"
-//#define D_GDEQ0583Z31   // 648x480, 5.83"
-//#define D_GDEY075Z08    // 800x480, 7.5"
-//#define D_GDEH075Z90    // 880x528, 7.5"
-//#define D_GDEY116Z91    // 960x640, 11.6"
-//#define D_GDEY1248Z51   // 1304x984, 12.48"
-//#define D_GDEM133Z91    // 960x680, 13.3"
-
-// 4C
-//#define D_GDEY0213F51   // 128x250, 2.13"
-//#define D_GDEY0266F51H  // 184x460, 2.66"
-//#define D_GDEY029F51H   // 168x384, 2.9"
-//#define D_WS3004YRBW    // 168x400, 3.00"
-//#define D_GDEY0420F51   // 400x300, 4.2"
-//#define D_WS437YRBW     // 512x368, 4.37"
-//#define D_GDEY0579F51   // 792x272, 5.79"
-//#define D_GDEY116F51    // 960x640, 11.6"
-
-// 7C
-//#define D_GDEP0565D90   // 600x448, 5.65"
-//#define D_GDEY073D46    // 800x480, 7.3"
-//#define D_GDEP073E01    // 800x480, 7.3"
-
-// ...
-// More supported display classes in GxEPD2 can be found example here:
-// https://github.com/ZinggJM/GxEPD2/blob/master/examples/GxEPD2_Example/GxEPD2_display_selection.h
-// If you need, you can get definition from there and define your own display
-
 ///////////////////////////////////////////////
 // That's all!
 // Code of ZivyObraz follows
@@ -213,252 +151,8 @@
   #error "Board not defined!"
 #endif
 
-#ifdef REMAP_SPI
-  #define PIN_SPI_CLK 13  // CLK
-  #define PIN_SPI_MISO 14 // unused
-  #define PIN_SPI_MOSI 12 // DIN
-  #define PIN_SPI_SS 15   // unused
-#endif
-
-///////////////////////
-// ePaper libraries
-///////////////////////
-
-// 2 colors (Black and White)
-#ifdef TYPE_BW
-  #include <GxEPD2_BW.h>
-static const char *defined_color_type = "BW";
-
-// 3 colors (Black, White and Red/Yellow)
-#elif defined TYPE_3C
-  #include <GxEPD2_3C.h>
-static const char *defined_color_type = "3C";
-
-// 4 colors (Black, White, Red and Yellow)
-#elif defined TYPE_4C
-  #include <GxEPD2_4C.h>
-static const char *defined_color_type = "4C";
-
-// 4 colors (Grayscale - Black, Darkgrey, Lightgrey, White) (https://github.com/ZinggJM/GxEPD2_4G)
-#elif defined TYPE_GRAYSCALE
-  #include "GxEPD2_4G_4G.h"
-  #include "GxEPD2_4G_BW.h"
-static const char *defined_color_type = "4G";
-
-// 7 colors
-#elif defined TYPE_7C
-  #include <GxEPD2_7C.h>
-static const char *defined_color_type = "7C";
-#else
-  #error "ePaper type not defined!"
-#endif
-
-///////////////////////
-// Displays
-///////////////////////
-
-///////////////////////
-// BW
-///////////////////////
-
-
-#ifdef D_FASTEPD
 #include <FastEPD.h>
 FASTEPD display;
-
-// GDEW0154T8 - BW, 152x152px, 1.54"
-#elif defined D_GDEW0154T8
-GxEPD2_BW<GxEPD2_154_T8, GxEPD2_154_T8::HEIGHT> display(GxEPD2_154_T8(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY027T91 - BW, 176x264px, 2.7"
-#elif defined D_GDEY027T91
-GxEPD2_BW<GxEPD2_270_GDEY027T91, GxEPD2_270_GDEY027T91::HEIGHT> display(GxEPD2_270_GDEY027T91(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY029T94 - BW, 128x296px, 2.9"
-#elif defined D_GDEY029T94
-GxEPD2_BW<GxEPD2_290_GDEY029T94, GxEPD2_290_GDEY029T94::HEIGHT> display(GxEPD2_290_GDEY029T94(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY029T71H - BW, 168x384px, 2.9"
-#elif defined D_GDEY029T71H
-GxEPD2_BW<GxEPD2_290_GDEY029T71H, GxEPD2_290_GDEY029T71H::HEIGHT> display(GxEPD2_290_GDEY029T71H(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEQ031T10 - BW, 240x320px, 3.1"
-#elif defined D_GDEQ031T10
-GxEPD2_BW<GxEPD2_310_GDEQ031T10, GxEPD2_310_GDEQ031T10::HEIGHT> display(GxEPD2_310_GDEQ031T10(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEQ042T81 - BW, 400x300px, 4.2"
-#elif defined D_GDEQ042T81
-GxEPD2_BW<GxEPD2_420_GDEY042T81, GxEPD2_420_GDEY042T81::HEIGHT> display(GxEPD2_420_GDEY042T81(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY0579T93 - BW, 792x272px, 5.79"
-#elif defined D_GDEY0579T93
-GxEPD2_BW<GxEPD2_579_GDEY0579T93, GxEPD2_579_GDEY0579T93::HEIGHT> display(GxEPD2_579_GDEY0579T93(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEQ0583T31 - BW, 648x480px, 5.83"
-#elif defined D_GDEQ0583T31
-GxEPD2_BW<GxEPD2_583_GDEQ0583T31, GxEPD2_583_GDEQ0583T31::HEIGHT> display(GxEPD2_583_GDEQ0583T31(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// WS75BWT7 - BW, 800x480px, 7.5"
-#elif defined D_WS75BWT7
-GxEPD2_BW<GxEPD2_750_T7, GxEPD2_750_T7::HEIGHT> display(GxEPD2_750_T7(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEW075T7 - BW, 800x480px, 7.5"
-#elif defined D_GDEW075T7
-GxEPD2_BW<GxEPD2_750, GxEPD2_750::HEIGHT> display(GxEPD2_750(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY075T7BW - BW, 800x480px, 7.5"
-#elif defined D_GDEY075T7BW
-GxEPD2_BW<GxEPD2_750_GDEY075T7, GxEPD2_750_GDEY075T7::HEIGHT> display(GxEPD2_750_GDEY075T7(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEM102T91 - BW, 960x640px, 10.2"
-#elif defined D_GDEM102T91
-GxEPD2_BW<GxEPD2_1020_GDEM102T91, GxEPD2_1020_GDEM102T91::HEIGHT / 2> display(GxEPD2_1020_GDEM102T91(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEM1085T51 - BW, 1360x480px, 10.85"
-#elif defined D_GDEM1085T51
-GxEPD2_BW<GxEPD2_1085_GDEM1085T51, GxEPD2_1085_GDEM1085T51::HEIGHT / 2> display(GxEPD2_1085_GDEM1085T51(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY, PIN_CS2));
-
-// GDEM133T91 - BW, 960x680px, 13.3"
-#elif defined D_GDEM133T91
-GxEPD2_BW<GxEPD2_1330_GDEM133T91, GxEPD2_1330_GDEM133T91::HEIGHT / 2> display(GxEPD2_1330_GDEM133T91(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-///////////////////////
-// Grayscale
-///////////////////////
-
-// GDEY0154D67 - Grayscale, 200x200px, 1.54"
-#elif defined D_GDEY0154D67
-GxEPD2_4G_4G<GxEPD2_154_GDEY0154D67, GxEPD2_154_GDEY0154D67::HEIGHT> display(GxEPD2_154_GDEY0154D67(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY0213B74 - Grayscale, 128x250px, 2.13"
-#elif defined D_GDEY0213B74
-GxEPD2_4G_4G<GxEPD2_213_GDEY0213B74, GxEPD2_213_GDEY0213B74::HEIGHT> display(GxEPD2_213_GDEY0213B74(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEW042T2_G - Grayscale, 400x300px, 4.2"
-#elif defined D_GDEW042T2_G
-GxEPD2_4G_4G<GxEPD2_420, GxEPD2_420::HEIGHT> display(GxEPD2_420(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY042T81 - Grayscale, 400x300px, 4.2"
-#elif defined D_GDEY042T81
-GxEPD2_4G_4G<GxEPD2_420_GDEY042T81, GxEPD2_420_GDEY042T81::HEIGHT> display(GxEPD2_420_GDEY042T81(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEQ0426T82 - Grayscale, 800x480px, 4.26"
-#elif defined D_GDEQ0426T82
-GxEPD2_4G_4G<GxEPD2_426_GDEQ0426T82, GxEPD2_426_GDEQ0426T82::HEIGHT / 2> display(GxEPD2_426_GDEQ0426T82(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY075T7 - Grayscale, 800x480px, 7.5"
-#elif defined D_GDEY075T7
-GxEPD2_4G_4G<GxEPD2_750_T7, GxEPD2_750_T7::HEIGHT / 2> display(GxEPD2_750_T7(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-///////////////////////
-// 3C
-///////////////////////
-
-// GDEY0154Z90 - 3C, 200x200px, 1.54"
-#elif defined D_GDEY0154Z90
-GxEPD2_3C<GxEPD2_154_Z90c, GxEPD2_154_Z90c::HEIGHT> display(GxEPD2_154_Z90c(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// WS42YBW400300 - 3C, 400x300px, 4.2"
-#elif defined D_WS42YBW400300
-GxEPD2_3C<GxEPD2_420c, GxEPD2_420c::HEIGHT> display(GxEPD2_420c(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEQ042Z21 - 3C, 400x300px, 4.2"
-#elif defined D_GDEQ042Z21
-GxEPD2_3C<GxEPD2_420c_Z21, GxEPD2_420c_Z21::HEIGHT> display(GxEPD2_420c_Z21(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY042Z98 - 3C, 400x300px, 4.2"
-#elif defined D_GDEY042Z98
-GxEPD2_3C<GxEPD2_420c_GDEY042Z98, GxEPD2_420c_GDEY042Z98::HEIGHT> display(GxEPD2_420c_GDEY042Z98(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// HINK_E075A01 - 3C, 640x384px, 7.5"
-#elif defined D_HINK_E075A01
-GxEPD2_3C<GxEPD2_750c, GxEPD2_750c::HEIGHT> display(GxEPD2_750c(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY0579Z93 - 3C, 792x272px, 5.79"
-#elif defined D_GDEY0579Z93
-GxEPD2_3C<GxEPD2_579c_GDEY0579Z93, GxEPD2_579c_GDEY0579Z93::HEIGHT> display(GxEPD2_579c_GDEY0579Z93(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEQ0583Z31 - 3C, 648x480px, 5.83"
-#elif defined D_GDEQ0583Z31
-GxEPD2_3C<GxEPD2_583c_Z83, GxEPD2_583c_Z83::HEIGHT / 2> display(GxEPD2_583c_Z83(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY075Z08 - 3C, 800x480px, 7.5"
-#elif defined D_GDEY075Z08
-GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT / 2> display(GxEPD2_750c_Z08(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEH075Z90 - 3C, 880x528px, 7.5"
-#elif defined D_GDEH075Z90
-GxEPD2_3C<GxEPD2_750c_Z90, GxEPD2_750c_Z90::HEIGHT / 2> display(GxEPD2_750c_Z90(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY116Z91 - 3C, 960x640px, 11.6"
-#elif defined D_GDEY116Z91
-GxEPD2_3C<GxEPD2_1160c_GDEY116Z91, GxEPD2_1160c_GDEY116Z91::HEIGHT / 4> display(GxEPD2_1160c_GDEY116Z91(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY1248Z51 - 3C, 1304x984px, 12.48"
-#elif defined D_GDEY1248Z51
-GxEPD2_3C<GxEPD2_1248c, GxEPD2_1248c::HEIGHT / 4> display(GxEPD2_1248c(/*sck=*/ 12, /*miso=*/ -1, /*mosi=*/ 11, /*cs_m1=*/ 10, /*cs_s1=*/ 18, /*cs_m2=*/ 48, /*cs_s2=*/ 41,
-                            /*dc1=*/ 46, /*dc2=*/ 45, /*rst1=*/ 3, /*rst2=*/ 39, /*busy_m1=*/ 8, /*busy_s1=*/ 17, /*busy_m2=*/ 40, /*busy_s2=*/ 16));
-
-// GDEM133Z91 - 3C, 960x680px, 13.3"
-#elif defined D_GDEM133Z91
-GxEPD2_3C<GxEPD2_1330c_GDEM133Z91, GxEPD2_1330c_GDEM133Z91::HEIGHT / 4> display(GxEPD2_1330c_GDEM133Z91(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-///////////////////////
-// 4C
-///////////////////////
-
-// GDEY0213F51 - 4C, 128x250px, 2.13"
-#elif defined D_GDEY0213F51
-GxEPD2_4C<GxEPD2_213c_GDEY0213F51, GxEPD2_213c_GDEY0213F51::HEIGHT> display(GxEPD2_213c_GDEY0213F51(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY0266F51H - 4C, 184x460px, 2.66"
-#elif defined D_GDEY0266F51H
-GxEPD2_4C<GxEPD2_266c_GDEY0266F51H, GxEPD2_266c_GDEY0266F51H::HEIGHT> display(GxEPD2_266c_GDEY0266F51H(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY029F51H - 4C, 168x384px, 2.9"
-#elif defined D_GDEY029F51H
-GxEPD2_4C<GxEPD2_290c_GDEY029F51H, GxEPD2_290c_GDEY029F51H::HEIGHT> display(GxEPD2_290c_GDEY029F51H(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// WS3004YRBW - 4C, 168x400px, 3.00"
-#elif defined D_WS3004YRBW
-GxEPD2_4C<GxEPD2_300c, GxEPD2_300c::HEIGHT> display(GxEPD2_300c(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY0420F51 - 4C, 400x300px, 4.2"
-#elif defined D_GDEY0420F51
-GxEPD2_4C<GxEPD2_420c_GDEY0420F51, GxEPD2_420c_GDEY0420F51::HEIGHT> display(GxEPD2_420c_GDEY0420F51(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// WS437YRBW - 4C, 512x368px, 4.37"
-#elif defined D_WS437YRBW
-GxEPD2_4C<GxEPD2_437c, GxEPD2_437c::HEIGHT / 4> display(GxEPD2_437c(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY0579F51 - 4C, 792x272px, 5.79"
-#elif defined D_GDEY0579F51
-GxEPD2_4C<GxEPD2_0579c_GDEY0579F51, GxEPD2_0579c_GDEY0579F51::HEIGHT> display(GxEPD2_0579c_GDEY0579F51(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY116F51 - 4C, 960x640px, 11.6"
-#elif defined D_GDEY116F51
-GxEPD2_4C<GxEPD2_1160c_GDEY116F51, GxEPD2_1160c_GDEY116F51::HEIGHT / 4> display(GxEPD2_1160c_GDEY116F51(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-///////////////////////
-// 7C
-///////////////////////
-
-// GDEP0565D90 - 7C, 600x448px, 5.65"
-#elif defined D_GDEP0565D90
-GxEPD2_7C<GxEPD2_565c, GxEPD2_565c::HEIGHT / 2> display(GxEPD2_565c(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEY073D46 - 7C, 800x480px, 7.3"
-#elif defined D_GDEY073D46
-GxEPD2_7C<GxEPD2_730c_GDEY073D46, GxEPD2_730c_GDEY073D46::HEIGHT / 4> display(GxEPD2_730c_GDEY073D46(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-// GDEP073E01 - 7C, 800x480px, 7.3"
-#elif defined D_GDEP073E01
-GxEPD2_7C<GxEPD2_730c_GDEP073E01, GxEPD2_730c_GDEP073E01::HEIGHT / 4> display(GxEPD2_730c_GDEP073E01(PIN_SS, PIN_DC, PIN_RST, PIN_BUSY));
-
-#else
-  #error "ePaper display not defined!"
-#endif
-
 
 ////////////////////////////
 // Library etc. includes
@@ -473,19 +167,8 @@ GxEPD2_7C<GxEPD2_730c_GDEP073E01, GxEPD2_730c_GDEP073E01::HEIGHT / 4> display(Gx
 #include <WiFi.h>
 #include <WiFiManager.h>
 
-// SPI
-#include "SPI.h"
 // ADC reading
 #include <ESP32AnalogRead.h>
-// Font
-#include <gfxfont.h>
-//#include "fonts/OpenSansSB_12px.h"
-#include "fonts/OpenSansSB_14px.h"
-#include "fonts/OpenSansSB_16px.h"
-#include "fonts/OpenSansSB_18px.h"
-#include "fonts/OpenSansSB_20px.h"
-//#include "fonts/OpenSansSB_22px.h"
-#include "fonts/OpenSansSB_24px.h"
 
 #include <QRCodeGenerator.h>
 QRCode qrcode;
@@ -496,10 +179,6 @@ QRCode qrcode;
 #ifdef ES3ink
   #include <Adafruit_NeoPixel.h>
   Adafruit_NeoPixel pixel(1, RGBledPin, NEO_GRB + NEO_KHZ800);
-#endif
-
-#ifdef REMAP_SPI
-SPIClass hspi(HSPI);
 #endif
 
 // Supported sensors
@@ -762,37 +441,16 @@ void drawQrCode(const char *qrStr, int qrSize, int yCord, int xCord, byte qrSize
       int newY = offset_y + (y * qrSizeMulti);
 
       display.fillRect(newX, newY, qrSizeMulti, qrSizeMulti,
-                       qrcode_getModule(&qrcode, x, y) ? GxEPD_BLACK : GxEPD_WHITE);
+                       qrcode_getModule(&qrcode, x, y) ? 0x0 : 0xf);
     }
   }
 }
 
 void centeredText(const String &text, int xCord, int yCord)
 {
-  int16_t x1, y1;
-  uint16_t w, h;
-  // display.getTextBounds(text.c_str(), 0, 0, &x1, &y1, &w, &h);
-  // display.setCursor(xCord - (w / 2), (yCord + (h / 2)));
-  // display.println(text);
-  display.drawString(text.c_str(), xCord, yCord);
-}
-
-void displayInit()
-{
-#ifdef REMAP_SPI
-  // only CLK and MOSI are important for EPD
-  hspi.begin(PIN_SPI_CLK, PIN_SPI_MISO, PIN_SPI_MOSI, PIN_SPI_SS); // swap pins
-  display.epd2.selectSPI(hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
-#endif
-
-#if (defined ES3ink) || (defined ESP32S3Adapter) || (defined ESPink_V3)
-  display.init(115200, true, 2, false); // USE THIS for Waveshare boards with "clever" reset circuit, 2ms reset pulse
-#else
-  // display.init();
-#endif
-  display.setRotation(0);
-  // display.fillScreen(GxEPD_WHITE); // white background
-  // display.setTextColor(GxEPD_BLACK); // black font
+  BBEPRECT rect;
+  display.getStringBox(text.c_str(), &rect);
+  display.drawString(text.c_str(), xCord - rect.w / 2, yCord);
 }
 
 // This is called if the WifiManager is in config mode (AP open)
@@ -818,124 +476,33 @@ void configModeCallback(WiFiManager *myWiFiManager)
 
   timestamp = 0; // set timestamp to 0 to force update because we changed screen to this info
 
-  // displayInit();
-  // setEPaperPowerOn(true);
   delay(500);
 
-  // display.setFullWindow();
-  // display.firstPage();
-  // do
-  // {
-  if (DISPLAY_RESOLUTION_X >= 800)
-  {
-    display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 90, 0xf);
-    // display.setTextColor(0xf);
-    // display.setFont(&OpenSansSB_24px);
-    centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 28);
-    // display.setFont(&OpenSansSB_18px);
-    centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 64);
-    // display.setTextColor(GxEPD_BLACK);
-    centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 120);
-    centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 145);
-    centeredText("1) Connect to this AP:", DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) - 50);
-    centeredText("2) Open in web browser:", DISPLAY_RESOLUTION_X * 3 / 4, (DISPLAY_RESOLUTION_Y / 2) - 50);
+  display.clearWhite();
+  display.setTextColor(BBEP_BLACK);
+  // display.setFont(&OpenSansSB_24px);
 
-    drawQrCode(qrString.c_str(), 4, (DISPLAY_RESOLUTION_Y / 2) + 40, DISPLAY_RESOLUTION_X / 4, 4);
-    display.drawLine(DISPLAY_RESOLUTION_X / 2 - 1, (DISPLAY_RESOLUTION_Y / 2) - 60, DISPLAY_RESOLUTION_X / 2 - 1, (DISPLAY_RESOLUTION_Y / 2) + 170, GxEPD_BLACK);
-    display.drawLine(DISPLAY_RESOLUTION_X / 2, (DISPLAY_RESOLUTION_Y / 2) - 60, DISPLAY_RESOLUTION_X / 2, (DISPLAY_RESOLUTION_Y / 2) + 170, GxEPD_BLACK);
-    drawQrCode(urlWeb.c_str(), 4, (DISPLAY_RESOLUTION_Y / 2) + 40, DISPLAY_RESOLUTION_X * 3 / 4, 4);
+  centeredText("No Wi-Fi configured OR connection lost", display.width() / 2, 28);
+  centeredText("Retries in a few minutes if lost.", display.width() / 2, 64);
+  centeredText("To setup or change Wi-Fi configuration", display.width() / 2, 120);
+  centeredText("(with mobile data turned off):", display.width() / 2, 145);
+  centeredText("1) Connect to this AP:", display.width() / 4, (display.height() / 2) - 50);
+  centeredText("2) Open in web browser:", display.width() * 3 / 4, (display.height() / 2) - 50);
 
-    centeredText("SSID: " + hostname, DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) + 130);
-    centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, (DISPLAY_RESOLUTION_Y / 2) + 155);
-    centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, (DISPLAY_RESOLUTION_Y / 2) + 130);
-    display.fillRect(0, DISPLAY_RESOLUTION_Y - 40, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
-    // display.setTextColor(GxEPD_WHITE);
-    centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 22);
-  }
-  else if (DISPLAY_RESOLUTION_X >= 600)
-  {
-    display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 70, GxEPD_BLACK);
-    // display.setTextColor(GxEPD_WHITE);
-    // display.setFont(&OpenSansSB_20px);
-    centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 20);
-    // display.setFont(&OpenSansSB_14px);
-    centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 50);
-    // display.setTextColor(GxEPD_BLACK);
-    centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 90);
-    centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 110);
-    centeredText("1) Connect to this AP:", DISPLAY_RESOLUTION_X / 4, 140);
-    centeredText("2) Open in web browser:", DISPLAY_RESOLUTION_X * 3 / 4, 140);
+  drawQrCode(qrString.c_str(), 4, (display.height() / 2) + 40, display.width() / 4, 4);
+  display.drawLine(display.width() / 2 - 1, (display.height() / 2) - 60, display.width() / 2 - 1, (display.height() / 2) + 170, 0x0);
+  display.drawLine(display.width() / 2, (display.height() / 2) - 60, display.width() / 2, (display.height() / 2) + 170, 0x0);
+  drawQrCode(urlWeb.c_str(), 4, (display.height() / 2) + 40, display.width() * 3 / 4, 4);
 
-    drawQrCode(qrString.c_str(), 4, 225, DISPLAY_RESOLUTION_X / 4 + 18, 3);
-    display.drawLine(DISPLAY_RESOLUTION_X / 2 - 1, 135, DISPLAY_RESOLUTION_X / 2 - 1, 310, GxEPD_BLACK);
-    display.drawLine(DISPLAY_RESOLUTION_X / 2, 135, DISPLAY_RESOLUTION_X / 2, 310, GxEPD_BLACK);
-    drawQrCode(urlWeb.c_str(), 4, 225, DISPLAY_RESOLUTION_X * 3 / 4 + 18, 3);
+  centeredText("SSID: " + hostname, display.width() / 4, (display.height() / 2) + 130);
+  centeredText("Password: " + wifiPassword, display.width() / 4, (display.height() / 2) + 155);
+  centeredText(urlWeb, display.width() * 3 / 4, (display.height() / 2) + 130);
 
-    centeredText("SSID: " + hostname, DISPLAY_RESOLUTION_X / 4, 280);
-    centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, 300);
-    centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, 280);
-    display.fillRect(0, DISPLAY_RESOLUTION_Y - 36, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
-    // display.setTextColor(GxEPD_WHITE);
-    centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 24);
-  }
-  else if (DISPLAY_RESOLUTION_X >= 400)
-  {
-    display.fillRect(0, 0, DISPLAY_RESOLUTION_X, 58, GxEPD_BLACK);
-    // display.setTextColor(GxEPD_WHITE);
-    // display.setFont(&OpenSansSB_16px);
-    centeredText("No Wi-Fi configured OR connection lost", DISPLAY_RESOLUTION_X / 2, 16);
-    // display.setFont(&OpenSansSB_14px);
-    centeredText("Retries in a few minutes if lost.", DISPLAY_RESOLUTION_X / 2, 40);
-    // display.setTextColor(GxEPD_BLACK);
-    centeredText("To setup or change Wi-Fi configuration", DISPLAY_RESOLUTION_X / 2, 72);
-    centeredText("(with mobile data turned off):", DISPLAY_RESOLUTION_X / 2, 92);
-    centeredText("1) Connect to AP", DISPLAY_RESOLUTION_X / 4, 115);
-    centeredText("2) Open in browser:", DISPLAY_RESOLUTION_X * 3 / 4, 115);
+  display.fillRect(0, display.height() - 40, display.width(), 40, 0x0);
+  display.setTextColor(0xf);
+  centeredText("Documentation: " + urlWiki, display.width() / 2, display.height() - 22);
 
-    drawQrCode(qrString.c_str(), 3, 190, DISPLAY_RESOLUTION_X / 4 + 18, 3);
-    display.drawLine(DISPLAY_RESOLUTION_X / 2 + 2, 108, DISPLAY_RESOLUTION_X / 2 + 2, 260, GxEPD_BLACK);
-    display.drawLine(DISPLAY_RESOLUTION_X / 2 + 3, 108, DISPLAY_RESOLUTION_X / 2 + 3, 260, GxEPD_BLACK);
-    drawQrCode(urlWeb.c_str(), 3, 190, DISPLAY_RESOLUTION_X * 3 / 4 + 18, 3);
 
-    centeredText("AP: " + hostname, DISPLAY_RESOLUTION_X / 4, 232);
-    centeredText("Password: " + wifiPassword, DISPLAY_RESOLUTION_X / 4, 250);
-    centeredText(urlWeb, DISPLAY_RESOLUTION_X * 3 / 4, 232);
-    display.fillRect(0, DISPLAY_RESOLUTION_Y - 25, DISPLAY_RESOLUTION_X, DISPLAY_RESOLUTION_Y, GxEPD_BLACK);
-    // display.setTextColor(GxEPD_WHITE);
-    centeredText("Documentation: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 15);
-  }
-  else
-  {
-    // Initialize defined resolution into variables for possible swap later
-    uint16_t small_resolution_x = DISPLAY_RESOLUTION_X;
-    uint16_t small_resolution_y = DISPLAY_RESOLUTION_Y;
-
-    // Use landscape mode - many small displays are in portrait mode
-    if (DISPLAY_RESOLUTION_X < DISPLAY_RESOLUTION_Y)
-    {
-      display.setRotation(3);
-
-      // Swap resolution for X and Y
-      small_resolution_x = DISPLAY_RESOLUTION_Y;
-      small_resolution_y = DISPLAY_RESOLUTION_X;
-    }
-
-    display.fillRect(0, 0, small_resolution_x, 34, GxEPD_BLACK);
-    // display.setTextColor(GxEPD_WHITE);
-    // display.setFont(&OpenSansSB_14px);
-    centeredText("No Wi-Fi setup OR connection", small_resolution_x / 2, 6);
-    centeredText("Retries in a few minutes if lost.", small_resolution_x / 2, 25);
-    // display.setTextColor(GxEPD_BLACK);
-    // setTextPos("Setup or change cfg:", 2, 44);
-    // setTextPos("AP: ..." + hostname.substring(hostname.length() - 6), 2, 64);
-    // setTextPos("Password: " + wifiPassword, 2, 84);
-    // setTextPos("Help: zivyobraz.eu ", 2, 104);
-
-    drawQrCode(qrString.c_str(), 3, 93, small_resolution_x - 28, 3);
-  }
-  // } while (false);
-
-  // setEPaperPowerOn(false);
   display.fullUpdate();
 }
 
@@ -1072,7 +639,7 @@ bool createHttpRequest(WiFiClient &client, bool &connStatus, bool checkTimestamp
                "&y=" + String(1200) +
               //  "&x=" + String(DISPLAY_RESOLUTION_X) +
               //  "&y=" + String(DISPLAY_RESOLUTION_Y) +
-               "&c=" + String(defined_color_type) +
+               "&c=" + String("BW") +
                "&fw=" + String(firmware) +
                "&ap_retries=" + String(notConnectedToAPCount) +
                extraParams;
@@ -1435,7 +1002,7 @@ void readBitmapData(WiFiClient &client)
           uint32_t in_bytes = 0;
           uint8_t in_byte = 0; // for depth <= 8
           uint8_t in_bits = 0; // for depth <= 8
-          uint16_t color = GxEPD_WHITE;
+          uint16_t color = 0xf;
           for (uint16_t col = 0; col < w; col++) // for each pixel
           {
             yield();
@@ -1560,7 +1127,7 @@ void readBitmapData(WiFiClient &client)
             }
             else if (colored && with_color)
             {
-              color = GxEPD_COLORED;
+              color = 0x10;
             }
             else
             {
@@ -1668,38 +1235,20 @@ void readBitmapData(WiFiClient &client)
           bytes_read++;
         }
 
-//         switch (pixel_color)
-//         {
-//           case 0x0:
-//             color = 0xc;
-//             break;
-//           case 0x1:
-//             color = 0x2;
-//             break;
-//           case 0x2:
-//             color = 0x6;
-//             break;
-//           case 0x3:
-//             color = 0x9;
-//             break;
-// #ifdef TYPE_7C
-//           case 0x4:
-//             color = GxEPD_GREEN;
-//             break;
-//           case 0x5:
-//             color = GxEPD_BLUE;
-//             break;
-//           case 0x6:
-//             color = GxEPD_ORANGE;
-//             break;
-// #endif
-//         }
-
-        // Debug
-        if (pixel_color == 1) {
-          color = 0xf;
-        } else {
-          color = 0x0;
+        // color picker (for Z2 only and 4BP mode)
+        switch (pixel_color) {
+          case 0:  // white
+            color = 0xf;
+            break;
+          case 1:  // black
+            color = 0x0;
+            break;
+          case 2:  // light gray
+            color = 0x9;
+            break;
+          case 3:  // dark gray
+            color = 0x6;
+            break;
         }
 
         // if (color != 0)
@@ -1754,61 +1303,22 @@ void testDraw()
 
 void setup()
 {
-#ifdef D_FASTEPD
   display.initPanel(BB_PANEL_EPDIY_V7);
   display.setPanelSize(1600, 1200);
   display.setMode(BB_MODE_4BPP);
-  display.fillScreen(0xf);  // some gray...
-  // testDraw();
-  // display.drawString("ahoj", 500, 100);
-  // display.fullUpdate();
-  // delay(1000);
 
-#endif  // D_FASTEPD
+  // display.drawString("ahoj", 100, 100);
+  // display.fullUpdate();
+
   Serial.begin(115200);
   Serial.println("Starting firmware for Zivy Obraz service");
-  // return;
-
-#ifdef ES3ink
-  // Battery voltage reading via PMOS switch with series capacitor to gate.
-  // can be read right after High->Low transition of enableBattery
-  // Here, pin should not go LOW, so intentionally digitalWrite called as first.
-  // First write output register (PORTx) then activate output direction (DDRx). Pin will go from highZ(sleep) to HIGH without LOW pulse.
-  digitalWrite(enableBattery, HIGH);
-  pinMode(enableBattery, OUTPUT);
-  pinMode(RGBledPowerPin, OUTPUT);
-  digitalWrite(RGBledPowerPin, HIGH);
-  pixel.begin();
-  pixel.setBrightness(15);
-  pixel.clear();
-  for(int i=0; i<1; i++) { 
-    pixel.setPixelColor(i, pixel.Color(150, 0, 0));
-    pixel.show();
-  }
-#endif
-
-#ifdef M5StackCoreInk
-  M5.begin(false, false, true);
-  display.init(115200, false);
-  M5.update();
-#endif
-
-#ifndef M5StackCoreInk
-  // pinMode(ePaperPowerPin, OUTPUT);
-#endif
-
-  // ePaper init
-  // displayInit();
-
+  
   // Battery voltage measurement
-  d_volt = getBatteryVoltage();
+  // d_volt = getBatteryVoltage();
 
   // Wifi init
-  // display.fullUpdate();
   WiFiInit();
-  // display.fullUpdate();
-  Serial.println("After wifiinit");
-  Serial.println("##################");
+
 
   // WiFi strength - so you will know how good your signal is
   rssi = getWifiStrength();
@@ -1831,26 +1341,11 @@ void setup()
 
       // Get that lovely bitmap and put it on your gorgeous grayscale ePaper screen!
 
-      // If you can't use whole display at once, there will be multiple pages and therefore
-      // requests and downloads of one bitmap from server, since you have to always write whole image
-      // display.setFullWindow();
-      // display.firstPage();
-
       timestamp = 0;
       readBitmapData(client);
 
       delay(100);
-      // Disable power supply for ePaper
-      // setEPaperPowerOn(false);
     }
-
-  #ifdef ES3ink
-    pixel.clear();
-    for(int i=0; i<1; i++) { 
-      pixel.setPixelColor(i, pixel.Color(0, 150, 0));
-      pixel.show();
-    }
-  #endif
   }
   else
   {
@@ -1864,7 +1359,6 @@ void setup()
     else deepSleepTime = 720;
 
     // Enable power supply for ePaper
-    setEPaperPowerOn(true);
     delay(500);
 
     // Display error message
@@ -1872,21 +1366,14 @@ void setup()
 
     delay(100);
     // Disable power supply for ePaper
-    setEPaperPowerOn(false);
   }
 
   // Deep sleep mode
   Serial.print("Going to sleep now for (minutes): ");
   Serial.println(deepSleepTime);
-
-#ifdef M5StackCoreInk
-  display.powerOff();
-  M5.shutdown(deepSleepTime * 60);
-#else
   esp_sleep_enable_timer_wakeup(deepSleepTime * 5 * 1000000);  // 5 seconds
   delay(100);
   esp_deep_sleep_start();
-#endif
 }
 
 void loop()
@@ -1894,3 +1381,6 @@ void loop()
   Serial.println("test");
   delay(1000);
 }
+
+// 0x0 -> black
+// 0xf -> white
