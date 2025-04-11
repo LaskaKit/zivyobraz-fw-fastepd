@@ -235,7 +235,7 @@ Adafruit_BME280 bme;
 
 /* ---- Server Zivy obraz ----------------------- */
 const char *host = "cdn.zivyobraz.eu";
-const char *firmware = "2.3";
+const char *firmware = "2.5";
 const String wifiPassword = "zivyobraz";
 const String urlWiki = "https://wiki.zivyobraz.eu ";
 
@@ -627,12 +627,11 @@ bool createHttpRequest(WiFiClient &client, bool &connStatus, bool checkTimestamp
                "&rssi=" + String(rssi) +
                "&ssid=" + ssid +
                "&v=" + String(d_volt) +
-               "&x=" + String(1600) +
-               "&y=" + String(1200) +
-              //  "&x=" + String(DISPLAY_RESOLUTION_X) +
-              //  "&y=" + String(DISPLAY_RESOLUTION_Y) +
-               "&c=" + String("BW") +
+               "&x=" + String(1600) +  // display width
+               "&y=" + String(1200) +  // display height
+               "&c=" + String("8G") +  // the color type
                "&fw=" + String(firmware) +
+               "&Sverio=" + String("ED133UT3") +
                "&ap_retries=" + String(notConnectedToAPCount) +
                extraParams;
 
@@ -1227,7 +1226,7 @@ void readBitmapData(WiFiClient &client)
           bytes_read++;
         }
 
-        // color picker (for Z2 only and 4BP mode)
+        // color picker (8 shades of gray)  0 3 5 7 9 a c f
         switch (pixel_color) {
           case 0:  // white
             color = 0xf;
@@ -1236,10 +1235,22 @@ void readBitmapData(WiFiClient &client)
             color = 0x0;
             break;
           case 2:  // light gray
-            color = 0x9;
+            color = 0xc;
             break;
           case 3:  // dark gray
-            color = 0x6;
+            color = 0x7;
+            break;
+          case 4:  // light gray 2
+            color = 0xa;
+            break;
+          case 5:  // light gray 3
+            color = 0x9;
+            break;
+          case 6:  // dark gray 2
+            color = 0x5;
+            break;
+          case 7:  // dark gray 3
+            color = 0x3;
             break;
         }
 
