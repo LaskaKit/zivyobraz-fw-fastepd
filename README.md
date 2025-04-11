@@ -18,6 +18,11 @@ NOTE: you need to add custom board definition for epdiy_v7 to platformio to comp
       Just place `epdiy_v7.json` into `~/.platformio/boards/`
 
 
+# How it works?
+
+![](zivyobraz.png)
+
+
 <!-- # Živý obraz - firmware
 
 Vítejte v repozitáři projektu Živý obraz s firmwarem pro vývojové desky založené na ESP32/ESP32-S3. Živý obraz slouží pro krmení ePaper/e-Ink displejů obrazovými daty z webového serveru ať už jde o bitmapu nebo o vlastní formát.
