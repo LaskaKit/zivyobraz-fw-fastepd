@@ -1,3 +1,6 @@
+#include <HTTPClient.h>
+#include <WiFi.h>
+
 #include <utils.hpp>
 
 
@@ -91,5 +94,53 @@ size_t draw_z3_image_chunk(FASTEPD& display,
         }
     }
     return drawn_pixels;
+}
+
+
+uint8_t* readPNG(String url, HTTPClient& http_client)
+{
+    http_client.begin("https://patrikn.pythonanywhere.com/image/png");
+    int httpResponseCode = http_client.GET();
+        
+    if (httpResponseCode == HTTP_CODE_OK) {
+        int len = http_client.getSize();
+        Serial.print("Payload size: ");
+        Serial.println(http_client.getSize());
+
+        uint8_t* buff = new uint8_t[1000000];
+
+        WiFiClient *stream = http_client.getStreamPtr();
+        size_t totalSize = 0;
+
+        unsigned long start = millis();
+        while (http_client.connected() && (len > 0 || len == -1)) {
+            size_t size = stream->available();
+            // Serial.println("AVAILABLE");
+            // Serial.println(size);
+            if (size) {
+                int c = stream->readBytes(buff + totalSize, ((size > 1000000 - totalSize) ? 1000000 - totalSize : size));
+                totalSize += c;
+
+                // for (int i = 0; i < 128; i++) {
+                //   Serial.print(buff[i]);
+                // }
+                // Serial.println("CHUNK read.");
+
+                if (len > 0) {
+                len -= c;
+                }
+            }
+            yield();
+            delay(100);
+        }
+        unsigned long end = millis();
+        Serial.print("Time taken (ms): ");
+        Serial.println(end - start);
+
+        Serial.print(totalSize / 1024);
+        Serial.println(" Kb");
+        return buff;
+    }
+    return nullptr;
 }
 

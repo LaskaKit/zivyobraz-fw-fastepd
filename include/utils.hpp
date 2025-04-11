@@ -1,5 +1,5 @@
 #include <FastEPD.h>
-
+#include <HTTPClient.h>
 
 enum class ZEncoding {Z1, Z2, Z3, UNKNOWN};
 
@@ -109,3 +109,6 @@ size_t draw_z3_image_chunk(FASTEPD& display,
                           size_t buflen,
                           PixelPosition& positon);
 
+
+
+uint8_t* readPNG(String url, HTTPClient& client);

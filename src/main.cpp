@@ -10,20 +10,16 @@
  * and
  * https://github.com/LaskaKit/ESPink-42/blob/main/SW/Weatherstation_info/Weatherstation_info.ino
  *
- * Compile with board type: ESP32 dev module
+ * Compile with board type: custom board (epdiy_v7.json)
  *
  * Libraries:
- * Analog read with calibration data: https://github.com/madhephaestus/ESP32AnalogRead/
- * EPD library: https://github.com/ZinggJM/GxEPD2
- * EPD library for 4G "Grayscale": https://github.com/ZinggJM/GxEPD2_4G
  * WiFi manager by tzapu https://github.com/tzapu/WiFiManager
  * QRCode generator: https://github.com/ricmoo/QRCode
- * SHT4x (temperature, humidity): https://github.com/adafruit/Adafruit_SHT4X
- * BME280 (temperature, humidity, pressure): https://github.com/adafruit/Adafruit_BME280_Library
- * SCD41 (CO2, temperature, humidity): https://github.com/sparkfun/SparkFun_SCD4x_Arduino_Library
+ * FastEPD: https://github.com/bitbank2/FastEPD
  *
  * original code made by Jean-Marc Zingg and LaskaKit
  * modified by @MultiTricker (https://michalsevcik.eu)
+ * Patrik Novak 2025
  */
 
 /////////////////////////////////
@@ -67,87 +63,91 @@
 
 #include <utils.hpp>
 #include <FastEPD.h>
+#include <PNGdec.h>
+
 #include <fonts/OpenSansSB_24px.h>
 
 #define BUFSIZE_IMAGE_REQUEST 4096
 FASTEPD display;
+PNG png;
 
 ////////////////////////////
 // Library etc. includes
 ////////////////////////////
 
-// M5Stack CoreInk
-#ifdef M5StackCoreInk
-  #include <M5CoreInk.h>
-#endif
+// // M5Stack CoreInk
+// #ifdef M5StackCoreInk
+//   #include <M5CoreInk.h>
+// #endif
 
 // WiFi
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <HTTPClient.h>
 
 // ADC reading
-#include <ESP32AnalogRead.h>
+// #include <ESP32AnalogRead.h>
 
 #include <QRCodeGenerator.h>
 QRCode qrcode;
 
-// TWI/I2C library
-#include <Wire.h>
+// // TWI/I2C library
+// #include <Wire.h>
 
-#ifdef ES3ink
-  #include <Adafruit_NeoPixel.h>
-  Adafruit_NeoPixel pixel(1, RGBledPin, NEO_GRB + NEO_KHZ800);
-#endif
+// #ifdef ES3ink
+//   #include <Adafruit_NeoPixel.h>
+//   Adafruit_NeoPixel pixel(1, RGBledPin, NEO_GRB + NEO_KHZ800);
+// #endif
 
-// Supported sensors
-#ifdef SENSOR
-  // SHT40/41/45
-  #include "Adafruit_SHT4x.h"
-Adafruit_SHT4x sht4 = Adafruit_SHT4x();
+// // Supported sensors
+// #ifdef SENSOR
+//   // SHT40/41/45
+//   #include "Adafruit_SHT4x.h"
+// Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 
-  // SCD40/41
-  #include "SparkFun_SCD4x_Arduino_Library.h"
-SCD4x SCD4(SCD4x_SENSOR_SCD41);
+//   // SCD40/41
+//   #include "SparkFun_SCD4x_Arduino_Library.h"
+// SCD4x SCD4(SCD4x_SENSOR_SCD41);
 
-  // BME280
-  #include <Adafruit_Sensor.h>
-  #include <Adafruit_BME280.h>
-Adafruit_BME280 bme;
-#endif
+//   // BME280
+//   #include <Adafruit_Sensor.h>
+//   #include <Adafruit_BME280.h>
+// Adafruit_BME280 bme;
+// #endif
 
-/* ---- ADC reading - indoor Battery voltage ---- */
-#ifdef ES3ink
-  #define vBatPin ADC1_GPIO2_CHANNEL
-  #define dividerRatio 2.018
+// /* ---- ADC reading - indoor Battery voltage ---- */
+// #ifdef ES3ink
+//   #define vBatPin ADC1_GPIO2_CHANNEL
+//   #define dividerRatio 2.018
 
-#elif defined M5StackCoreInk
-  #define vBatPin 35
+// #elif defined M5StackCoreInk
+//   #define vBatPin 35
 
-#elif defined MakerBadge_revB
-  #define vBatPin 6
-  #define BATT_V_CAL_SCALE 1.00
+// #elif defined MakerBadge_revB
+//   #define vBatPin 6
+//   #define BATT_V_CAL_SCALE 1.00
 
-#elif defined MakerBadge_revD
-  #define vBatPin 6
-  #define BATT_V_CAL_SCALE 1.05
+// #elif defined MakerBadge_revD
+//   #define vBatPin 6
+//   #define BATT_V_CAL_SCALE 1.05
 
-#elif defined TTGO_T5_v23
-  #define vBatPin 35
+// #elif defined TTGO_T5_v23
+//   #define vBatPin 35
 
-#elif defined ESP32S3Adapter
-  ESP32AnalogRead adc;
-  #define vBatPin ADC1_GPIO9_CHANNEL  
-  #define dividerRatio 2.018
+// #elif defined ESP32S3Adapter
+//   ESP32AnalogRead adc;
+//   #define vBatPin ADC1_GPIO9_CHANNEL  
+//   #define dividerRatio 2.018
 
-#elif defined ESPink_V3
-  #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h>
-  SFE_MAX1704X lipo(MAX1704X_MAX17048);
+// #elif defined ESPink_V3
+//   #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h>
+//   SFE_MAX1704X lipo(MAX1704X_MAX17048);
 
-#else
-  ESP32AnalogRead adc;
-  #define vBatPin 34
-  #define dividerRatio 1.769
-#endif
+// #else
+//   ESP32AnalogRead adc;
+//   #define vBatPin 34
+//   #define dividerRatio 1.769
+// #endif
 
 /* ---- Server Zivy obraz ----------------------- */
 const char *host = "cdn.zivyobraz.eu";
@@ -167,8 +167,6 @@ uint64_t deepSleepTime = defaultDeepSleepTime; // actual sleep time in minutes, 
 #define DISPLAY_RESOLUTION_X 1600
 #define DISPLAY_RESOLUTION_Y 1200
 
-// #define DISPLAY_RESOLUTION_X display.epd2.WIDTH
-// #define DISPLAY_RESOLUTION_Y display.epd2.HEIGHT
 /* ---------------------------------------------- */
 
 /* variables */
@@ -216,16 +214,16 @@ int8_t getWifiStrength()
   return rssi;
 }
 
-float getBatteryVoltage()
-{
-  float volt;
-  // attach ADC input
-  adc.attach(vBatPin);
-  // battery voltage measurement
-  volt = (float)(adc.readVoltage() * dividerRatio);
-  Serial.println("Battery voltage: " + String(volt) + " V");
-  return volt;
-}
+// float getBatteryVoltage()
+// {
+//   float volt;
+//   // attach ADC input
+//   adc.attach(vBatPin);
+//   // battery voltage measurement
+//   volt = (float)(adc.readVoltage() * dividerRatio);
+//   Serial.println("Battery voltage: " + String(volt) + " V");
+//   return volt;
+// }
 
 void drawQrCode(const char *qrStr, int qrSize, int yCord, int xCord, byte qrSizeMulti = 1)
 {
@@ -324,7 +322,7 @@ void displayNoWiFiError()
   // display.setFont(&OpenSansSB_14px);
   centeredText("Docs: " + urlWiki, DISPLAY_RESOLUTION_X / 2, DISPLAY_RESOLUTION_Y - 20);
  
-  display.fullUpdate();
+  display.fullUpdate(true);
 }
 
 void WiFiInit()
@@ -980,16 +978,17 @@ void readBitmapData(WiFiClient &client)
 
     while (position.is_inside(display) && client.available()) {
       client.readBytes(buffer, BUFSIZE_IMAGE_REQUEST);
-      draw_z_image_chunk(display, buffer, 4096, position, encoding);
+      bytes_read += draw_z_image_chunk(display, buffer, BUFSIZE_IMAGE_REQUEST, position, encoding);
     }
-    display.fullUpdate(true);
+    Serial.print("Read: ");
+    Serial.print(bytes_read / 1024);
+    Serial.println(" Kb");
   }
 
   Serial.print("loaded in ");
   Serial.print(millis() - startTime);
   Serial.println(" ms");
-
-  client.stop();
+  
   // if (!valid)
   // {
   //   Serial.print("Format not handled, got: ");
@@ -1010,14 +1009,26 @@ void testDraw()
   }
 }
 
+void PNGDraw(PNGDRAW *pDraw)
+{
+  if (pDraw->iPixelType == PNG_PIXEL_GRAYSCALE && pDraw->iBpp == 8) {
+    // Serial.println("Grayscale PNG");
+    // Serial.println(pDraw->y);
+    // Serial.println(pDraw->iWidth);
+    // Serial.println(pDraw->iPitch);
+    // Serial.println(pDraw->iBpp);
+
+    for (size_t x = 0; x < pDraw->iWidth; x++) {
+      display.drawPixelFast(x, pDraw->y, pDraw->pPixels[x] / 16);
+    }
+  }
+} /* PNGDraw() */
+
 void setup()
 {
   display.initPanel(BB_PANEL_EPDIY_V7);
   display.setPanelSize(1600, 1200);
   display.setMode(BB_MODE_4BPP);
-
-  // display.drawString("ahoj", 100, 100);
-  // display.fullUpdate();
 
   Serial.begin(115200);
   Serial.println("Starting firmware for Zivy Obraz service");
@@ -1041,13 +1052,37 @@ void setup()
   // Successfully connected to Wi-Fi?
   if(notConnectedToAPCount == 0)
   {
-    // Do we need to update the screen?
-    if (checkForNewTimestampOnServer(client))
-    {
-      // Get that lovely bitmap and put it on your gorgeous grayscale ePaper screen!
-      timestamp = 0;
-      readBitmapData(client);
+    Serial.println("JPEGDRAW");
+    HTTPClient http_client;
+    uint8_t* png_raw = readPNG("", http_client);
+    int rc = png.openRAM(png_raw, 1000000, PNGDraw);
+    char szTemp[256];
+    if (rc == PNG_SUCCESS) {
+      sprintf(szTemp, "image specs: (%d x %d), %d bpp, pixel type: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType());
+      Serial.print(szTemp);
+      rc = png.decode(NULL, 0); // no private structure and skip CRC checking
+      png.close();
+    } else {
+      Serial.println("DECODING failed");
     }
+    delete[] png_raw;
+
+    
+
+
+    // // Do we need to update the screen?
+    // if (checkForNewTimestampOnServer(client))
+    // {
+    //   // Get that lovely bitmap and put it on your gorgeous grayscale ePaper screen!
+    //   timestamp = 0;
+    //   readBitmapData(client);
+    //   client.stop();
+
+      unsigned long draw_start = millis();
+      display.fullUpdate(true);  // true -> fast update
+      Serial.print("drawn in "); Serial.print(millis() - draw_start); Serial.println(" ms");
+
+    // }
   }
   else
   {
@@ -1060,14 +1095,8 @@ void setup()
     else if(notConnectedToAPCount <= 50) deepSleepTime = 60;
     else deepSleepTime = 720;
 
-    // Enable power supply for ePaper
-    delay(500);
-
     // Display error message
     displayNoWiFiError();
-
-    delay(100);
-    // Disable power supply for ePaper
   }
 
   // Deep sleep mode
