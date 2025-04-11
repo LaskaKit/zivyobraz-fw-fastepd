@@ -65,95 +65,11 @@
 // Board
 ////////////
 
-// https://www.laskakit.cz/laskakit-espink-esp32-e-paper-pcb-antenna/?variantId=12419
-// + LaskaKit ESPInk-42 all-in-one board
-
-#ifdef ESPink_V2
-  #define PIN_SS 5
-  #define PIN_DC 17
-  #define PIN_RST 16
-  #define PIN_BUSY 4
-  #define PIN_CS2 35
-  #define ePaperPowerPin 2
-
-#elif defined ESPink_V3
-  #define PIN_SS 10
-  #define PIN_DC 48
-  #define PIN_RST 45
-  #define PIN_BUSY 36
-  #define PIN_CS2 35
-  #define ePaperPowerPin 47
-  #define PIN_SPI_MOSI 11
-  #define PIN_SPI_CLK 12
-  #define PIN_SDA 42
-  #define PIN_SCL 2
-  #define PIN_ALERT 9
-
-#elif defined ESP32S3Adapter
-  // With ESP32-S3 DEVKIT from laskakit.cz
-  #define PIN_SS 10
-  #define PIN_DC 41
-  #define PIN_RST 40
-  #define PIN_BUSY 13
-  #define ePaperPowerPin 47
-  #define enableBattery 9
-  #define PIN_SPI_CLK 12
-  #define PIN_SPI_MOSI 11
-
-  #include <esp_adc_cal.h>
-  #include <soc/adc_channel.h>
-
-#elif defined ES3ink
-  // for version P1.1
-  #define PIN_SS 10
-  #define PIN_DC 7
-  #define PIN_RST 5
-  #define PIN_BUSY 6
-  #define PIN_CS2 35
-  #define ePaperPowerPin 3
-  #define enableBattery 40
-  #define RGBledPin 48
-  #define RGBledPowerPin 14
-
-  #include <esp_adc_cal.h>
-  #include <soc/adc_channel.h>
-
-#elif defined MakerBadge_revB
-  #define PIN_SS 41
-  #define PIN_DC 40
-  #define PIN_RST 39
-  #define PIN_BUSY 42
-  #define ePaperPowerPin 16
-
-#elif defined MakerBadge_revD
-  #define PIN_SS 41
-  #define PIN_DC 40
-  #define PIN_RST 39
-  #define PIN_BUSY 42
-  #define ePaperPowerPin 16
-  #define enableBattery 14
-
-#elif defined TTGO_T5_v23
-  #define PIN_SS 5
-  #define PIN_DC 17
-  #define PIN_RST 16
-  #define PIN_BUSY 4
-  #define ePaperPowerPin 2
-
-#elif defined EPDIY_V7
-  #define PIN_SS 5
-  #define PIN_DC 17
-  #define PIN_RST 16
-  #define PIN_BUSY 4
-  #define ePaperPowerPin 2
-
-#else
-  #error "Board not defined!"
-#endif
-
-
+#include <utils.hpp>
 #include <FastEPD.h>
 #include <fonts/OpenSansSB_24px.h>
+
+#define BUFSIZE_IMAGE_REQUEST 4096
 FASTEPD display;
 
 ////////////////////////////
@@ -263,16 +179,6 @@ RTC_DATA_ATTR uint64_t timestamp = 0;
 RTC_DATA_ATTR uint8_t notConnectedToAPCount = 0;
 uint64_t timestampNow = 1; // initialize value for timestamp from server
 
-void setEPaperPowerOn(bool on)
-{
-  // use HIGH/LOW notation for better readability
-#if (defined ES3ink) || (defined MakerBadge_revD)
-  digitalWrite(ePaperPowerPin, on ? LOW : HIGH);
-#elif !defined M5StackCoreInk
-  digitalWrite(ePaperPowerPin, on ? HIGH : LOW);
-#endif
-}
-
 const String getWifiSSID()
 {
   String wifiSSID = WiFi.SSID();
@@ -313,115 +219,11 @@ int8_t getWifiStrength()
 float getBatteryVoltage()
 {
   float volt;
-
-#if defined ESPink_V3
-
-  Serial.println("Reading battery on ESPink V3 board");
-
-  setEPaperPowerOn(true);
-  pinMode(PIN_ALERT, INPUT_PULLUP);
-
-  delay(100);
-
-  Wire.begin (PIN_SDA, PIN_SCL);
-
-  lipo.begin();
-
-  //lipo.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
-
-  // Read and print the reset indicator
-  Serial.print(F("Reset Indicator was: "));
-  bool RI = lipo.isReset(true); // Read the RI flag and clear it automatically if it is set
-  Serial.println(RI); // Print the RI
-  // If RI was set, check it is now clear
-  if (RI)
-  {
-    Serial.print(F("Reset Indicator is now: "));
-    RI = lipo.isReset(); // Read the RI flag
-    Serial.println(RI); // Print the RI    
-  }
-
-	lipo.setThreshold(1); // Set alert threshold to just 1% - we don't want to trigger the alert
-  lipo.setVALRTMax((float)4.3); // Set high voltage threshold (Volts)
-  lipo.setVALRTMin((float)2.9); // Set low voltage threshold (Volts)
-  
-  volt = (float)lipo.getVoltage();
-  // percentage could be read like this:
-  // lipo.getSOC();
-  //Serial.println("Battery percentage: " + String(lipo.getSOC(), 2) + " %");
-
-  lipo.clearAlert();
-  lipo.enableHibernate();
-
-  setEPaperPowerOn(false);
-
-#elif defined ES3ink
-  esp_adc_cal_characteristics_t adc_cal;
-  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 0, &adc_cal);
-  adc1_config_channel_atten(vBatPin, ADC_ATTEN_DB_11);
-
-  Serial.println("Reading battery on ES3ink board");
-
-  digitalWrite(enableBattery, LOW);
-  uint32_t raw = adc1_get_raw(vBatPin);
-  //Serial.println(raw);
-  uint32_t millivolts = esp_adc_cal_raw_to_voltage(raw, &adc_cal);
-  //Serial.println(millivolts);
-  const uint32_t upper_divider = 1000;
-  const uint32_t lower_divider = 1000;
-  volt = (float)(upper_divider + lower_divider) / lower_divider / 1000 * millivolts;
-  digitalWrite(enableBattery, HIGH);
-
-#elif defined ESP32S3Adapter
-  Serial.println("Reading battery on ESP32-S3 DEVKIT board");
   // attach ADC input
   adc.attach(vBatPin);
   // battery voltage measurement
   volt = (float)(adc.readVoltage() * dividerRatio);
-
-#elif defined M5StackCoreInk
-  analogSetPinAttenuation(vBatPin, ADC_11db);
-  esp_adc_cal_characteristics_t *adc_chars = (esp_adc_cal_characteristics_t *)calloc(1, sizeof(esp_adc_cal_characteristics_t));
-  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 3600, adc_chars);
-  uint16_t ADCValue = analogRead(vBatPin);
-
-  uint32_t BatVolmV = esp_adc_cal_raw_to_voltage(ADCValue, adc_chars);
-  volt = float(BatVolmV) * 25.1 / 5.1 / 1000;
-  free(adc_chars);
-
-#elif defined MakerBadge_revB
-  volt = (BATT_V_CAL_SCALE * 2.0 * (2.50 * analogRead(vBatPin) / 8192));
-
-#elif defined MakerBadge_revD
-  // Borrowed from @Yourigh
-  // Battery voltage reading
-  // can be read right after High->Low transition of IO_BAT_meas_disable
-  // Here, pin should not go LOW, so intentionally digitalWrite called as first.
-  // First write output register (PORTx) then activate output direction (DDRx). Pin will go from highZ(sleep) to HIGH without LOW pulse.
-  digitalWrite(enableBattery, HIGH);
-  pinMode(enableBattery, OUTPUT);
-
-  digitalWrite(enableBattery, LOW);
-  delayMicroseconds(150);
-  volt = (BATT_V_CAL_SCALE * 2.0 * (2.50 * analogRead(vBatPin) / 8192));
-  digitalWrite(enableBattery, HIGH);
-
-#elif defined TTGO_T5_v23
-  esp_adc_cal_characteristics_t adc_chars;
-  esp_adc_cal_value_t val_type = esp_adc_cal_characterize((adc_unit_t)ADC_UNIT_1, (adc_atten_t)ADC_ATTEN_DB_2_5, (adc_bits_width_t)ADC_WIDTH_BIT_12, 1100, &adc_chars);
-  
-  float measurement = (float) analogRead(vBatPin);
-  volt = (float)(measurement / 4095.0) * 7.05;
-
-#else
-  // attach ADC input
-  adc.attach(vBatPin);
-  // battery voltage measurement
-  volt = (float)(adc.readVoltage() * dividerRatio);
-#endif
-
   Serial.println("Battery voltage: " + String(volt) + " V");
-
   return volt;
 }
 
@@ -619,6 +421,11 @@ uint32_t read32(WiFiClient &client)
   return result;
 }
 
+
+/**
+ * Make a GET request and read headers.
+ * Return true if screen update shall be sheduled.
+*/
 bool createHttpRequest(WiFiClient &client, bool &connStatus, bool checkTimestamp, const String &extraParams)
 {
   // Make an url
@@ -811,6 +618,10 @@ int readSensorsVal(float &sen_temp, int &sen_humi, int &sen_pres)
 }
 #endif
 
+/**
+ * Internally calls createHttpRequest function.
+ * Optionally sends sensor data.
+*/
 bool checkForNewTimestampOnServer(WiFiClient &client)
 {
   bool connection_ok = false;
@@ -853,6 +664,10 @@ bool checkForNewTimestampOnServer(WiFiClient &client)
   return createHttpRequest(client, connection_ok, true, extraParams);
 }
 
+
+/**
+ * Just error printing function.
+*/
 void print_error_reading(uint32_t bytes_read)
 {
   // print error message when reading bitmap data from server failed
@@ -860,6 +675,9 @@ void print_error_reading(uint32_t bytes_read)
   Serial.println(bytes_read);
 }
 
+/**
+ * It does a http get request, parses the data and prints it on a display.
+*/
 void readBitmapData(WiFiClient &client)
 {
   // Let's read bitmap
@@ -1141,142 +959,30 @@ void readBitmapData(WiFiClient &client)
     // Z1 - 1 byte for color, 1 byte for number of repetition
     // Z2 - 2 bits for color, 6 bits for number of repetition
     // Z3 - 3 bits for color, 5 bits for number of repetition
-    if (header == 0x315A) Serial.println("Got format Z1, processing");
-    else if (header == 0x325A) Serial.println("Got format Z2, processing");
-    else Serial.println("Got format Z3, processing");
+    ZEncoding encoding = ZEncoding::UNKNOWN;
+    if (header == 0x315A) {
+      Serial.println("Got format Z1, processing");
+      encoding = ZEncoding::Z1;
+    }
+    else if (header == 0x325A) {
+      Serial.println("Got format Z2, processing");
+      encoding = ZEncoding::Z2;
+    }
+    else {
+      Serial.println("Got format Z3, processing");
+      encoding = ZEncoding::Z3;
+    }
 
     uint32_t bytes_read = 2; // read so far
-    uint16_t w = display.width();
-    uint16_t h = display.height();
-    uint8_t pixel_color, count, compressed;
-    uint16_t color = 0x1;
-    valid = true;
 
-    uint16_t color2 = 0x10;
-    uint16_t color3 = 0x4;
+    uint8_t buffer[BUFSIZE_IMAGE_REQUEST];
+    PixelPosition position;
 
-#if (defined TYPE_BW) || (defined TYPE_GRAYSCALE)
-    color2 = 0x10;
-    color3 = 0x4;
-#endif
-    display.fillScreen(0xf);
-    for (uint16_t row = 0; row < h; row++) // for each line
-    {
-      if (!connection_ok || !(client.connected() || client.available())) break;
-
-      for (uint16_t col = 0; col < w; col++) // for each pixel
-      {
-        yield();
-
-        if (!connection_ok)
-        {
-          Serial.print("Error: got no more after ");
-          Serial.print(bytes_read);
-          Serial.println(" bytes read!");
-          break;
-        }
-
-        if (!(client.connected() || client.available()))
-        {
-          print_error_reading(bytes_read);
-          break;
-        }
-
-        // Z1
-        if (header == 0x315A)
-        {
-          pixel_color = safe_read_valid(client,&valid);
-          if (!valid)
-          {
-            print_error_reading(bytes_read);
-            break;
-          }
-          count = safe_read_valid(client,&valid);
-          if (!valid)
-          {
-            print_error_reading(bytes_read);
-            break;
-          }
-          bytes_read += 2;
-        }
-        else if (header == 0x325A)
-        {
-          // Z2
-          compressed = safe_read_valid(client,&valid);
-          if (!valid)
-          {
-            print_error_reading(bytes_read);
-            break;
-          }
-          count = compressed & 0b00111111;
-          pixel_color = (compressed & 0b11000000) >> 6;
-          bytes_read++;
-        }
-        else if (header == 0x335A)
-        {
-          // Z3
-          compressed = safe_read_valid(client,&valid);
-          if (!valid)
-          {
-            print_error_reading(bytes_read);
-            break;
-          }
-          count = compressed & 0b00011111;
-          pixel_color = (compressed & 0b11100000) >> 5;
-          bytes_read++;
-        }
-
-        // color picker (8 shades of gray)  0 3 5 7 9 a c f
-        switch (pixel_color) {
-          case 0:  // white
-            color = 0xf;
-            break;
-          case 1:  // black
-            color = 0x0;
-            break;
-          case 2:  // light gray
-            color = 0xc;
-            break;
-          case 3:  // dark gray
-            color = 0x7;
-            break;
-          case 4:  // light gray 2
-            color = 0xa;
-            break;
-          case 5:  // light gray 3
-            color = 0x9;
-            break;
-          case 6:  // dark gray 2
-            color = 0x5;
-            break;
-          case 7:  // dark gray 3
-            color = 0x3;
-            break;
-        }
-
-        // if (color != 0)
-        // {
-        //   Serial.print("count: "); Serial.print(count); Serial.print(" pixel: "); Serial.println(color);
-        // }
-
-        for (uint8_t i = 0; i < count - 1; i++)
-        {
-          yield();
-
-          display.drawPixelFast(col, row, color);
-          if ((count > 1) && (++col == w))
-          {
-            col = 0;
-            row++;
-          }
-        }
-        display.drawPixelFast(col, row, color);
-      } // end col
-    } // end row
-    display.fullUpdate();
-
-    Serial.print("bytes read ");
-    Serial.println(bytes_read);
+    while (position.is_inside(display) && client.available()) {
+      client.readBytes(buffer, BUFSIZE_IMAGE_REQUEST);
+      draw_z_image_chunk(display, buffer, 4096, position, encoding);
+    }
+    display.fullUpdate(true);
   }
 
   Serial.print("loaded in ");
@@ -1284,13 +990,13 @@ void readBitmapData(WiFiClient &client)
   Serial.println(" ms");
 
   client.stop();
-  if (!valid)
-  {
-    Serial.print("Format not handled, got: ");
-    Serial.println(header);
-    deepSleepTime = defaultDeepSleepTime;
-    timestamp = 0;
-  }
+  // if (!valid)
+  // {
+  //   Serial.print("Format not handled, got: ");
+  //   Serial.println(header);
+  //   deepSleepTime = defaultDeepSleepTime;
+  //   timestamp = 0;
+  // }
 }
 
 void testDraw()
@@ -1338,16 +1044,9 @@ void setup()
     // Do we need to update the screen?
     if (checkForNewTimestampOnServer(client))
     {
-      // Enable power supply for ePaper
-      // setEPaperPowerOn(true);
-      delay(500);
-
       // Get that lovely bitmap and put it on your gorgeous grayscale ePaper screen!
-
       timestamp = 0;
       readBitmapData(client);
-
-      delay(100);
     }
   }
   else
@@ -1372,18 +1071,11 @@ void setup()
   }
 
   // Deep sleep mode
-  Serial.print("Going to sleep now for (minutes): ");
+  Serial.print("Going to sleep now for (seconds): ");
   Serial.println(deepSleepTime);
-  esp_sleep_enable_timer_wakeup(deepSleepTime * 5 * 1000000);  // 5 seconds
+  esp_sleep_enable_timer_wakeup(deepSleepTime * 30 * 1000000);  // 30 seconds
   delay(100);
   esp_deep_sleep_start();
 }
 
-void loop()
-{
-  Serial.println("test");
-  delay(1000);
-}
-
-// 0x0 -> black
-// 0xf -> white
+void loop() {}
