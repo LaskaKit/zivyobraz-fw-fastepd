@@ -89,6 +89,16 @@ size_t draw_z_image_chunk(FASTEPD& display,
                           ZEncoding encoding);
 
 
+/**
+ * Draws contents of Z1 encoded buffer onto a display.
+ *
+ * @return int The number of drawn pixels.
+*/
+size_t draw_z1_image_chunk(FASTEPD& display,
+                          uint8_t buffer[],
+                          size_t buflen,
+                          PixelPosition& positon);
+
 
 /**
  * Draws contents of Z2 encoded buffer onto a display.
@@ -99,7 +109,6 @@ size_t draw_z2_image_chunk(FASTEPD& display,
                           uint8_t buffer[],
                           size_t buflen,
                           PixelPosition& positon);
-
 
 
 /**

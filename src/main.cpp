@@ -86,7 +86,8 @@ PNG png;
 #include <HTTPClient.h>
 
 // ADC reading
-// #include <ESP32AnalogRead.h>
+#include <ESP32AnalogRead.h>
+ESP32AnalogRead adc;
 
 #include <QRCodeGenerator.h>
 QRCode qrcode;
@@ -214,16 +215,21 @@ int8_t getWifiStrength()
   return rssi;
 }
 
-// float getBatteryVoltage()
-// {
-//   float volt;
-//   // attach ADC input
-//   adc.attach(vBatPin);
-//   // battery voltage measurement
-//   volt = (float)(adc.readVoltage() * dividerRatio);
-//   Serial.println("Battery voltage: " + String(volt) + " V");
-//   return volt;
-// }
+/**
+ * Read battery voltage on EPDIY v7.
+*/
+float getBatteryVoltage()
+{
+  // attach ADC input
+  adc.attach(1);
+  float v_pin = adc.readVoltage();
+
+  // R1 = 680k, R2 = 150k
+  // Vbat = Vpin * (R1 + R2) / R2
+  float v_bat = v_pin * (680 + 150) / 150;
+  Serial.println("Battery voltage: " + String(v_bat) + " V");
+  return v_bat;
+}
 
 void drawQrCode(const char *qrStr, int qrSize, int yCord, int xCord, byte qrSizeMulti = 1)
 {
@@ -1034,8 +1040,7 @@ void setup()
   Serial.println("Starting firmware for Zivy Obraz service");
   
   // Battery voltage measurement
-  // d_volt = getBatteryVoltage();
-
+  d_volt = getBatteryVoltage();
   // Wifi init
   WiFiInit();
 
@@ -1068,8 +1073,6 @@ void setup()
     delete[] png_raw;
 
     
-
-
     // // Do we need to update the screen?
     // if (checkForNewTimestampOnServer(client))
     // {
