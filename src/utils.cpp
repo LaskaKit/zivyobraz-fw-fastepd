@@ -36,12 +36,40 @@ size_t draw_z_image_chunk(FASTEPD& display,
                           ZEncoding encoding)
 {
     switch (encoding) {
+        case ZEncoding::Z1:
+            return draw_z1_image_chunk(display, buffer, buflen, position);
         case ZEncoding::Z2:
             return draw_z2_image_chunk(display, buffer, buflen, position);
         case ZEncoding::Z3:
             return draw_z3_image_chunk(display, buffer, buflen, position);
     }
     return 0;
+}
+
+size_t draw_z1_image_chunk(FASTEPD& display,
+                           uint8_t buffer[],
+                           size_t buflen,
+                           PixelPosition& position)
+{
+    if (buflen % 2 != 0) {
+        Serial.print("WARNING: Buflen is odd.");
+    }
+    if (!position.is_inside(display)) {
+        return 0;
+    }
+    size_t drawn_pixels = 0;
+    for (size_t i = 0; i < buflen - 1; i += 2) {
+        Z1Pixel px(buffer[i], buffer[i+1]);
+        uint8_t mapped_color = px.color();  // TODO: color mapping for Z1
+        for (size_t count = 0; count < px.count(); count++) {
+            if (!position.next(display)) {
+                return drawn_pixels;
+            }
+            drawn_pixels++;
+            display.drawPixelFast(position.x, position.y, mapped_color);
+        }
+    }
+    return drawn_pixels;
 }
 
 

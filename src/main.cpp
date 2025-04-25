@@ -1052,7 +1052,7 @@ void setup()
   // Successfully connected to Wi-Fi?
   if(notConnectedToAPCount == 0)
   {
-    Serial.println("JPEGDRAW");
+    Serial.println("PNGDRAW");
     HTTPClient http_client;
     uint8_t* png_raw = readPNG("", http_client);
     int rc = png.openRAM(png_raw, 1000000, PNGDraw);

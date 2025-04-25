@@ -13,6 +13,9 @@ struct Z1Pixel
         px_color = data >> 8;
         px_count = data;
     }
+    Z1Pixel(uint8_t count, uint8_t color)
+        : px_count(count), px_color(color)
+    {}
     inline uint8_t color() { return px_color; }
     inline uint8_t count() { return px_count; }
 };
