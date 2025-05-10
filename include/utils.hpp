@@ -81,6 +81,8 @@ uint8_t map_color_from_z(uint8_t z_color);
 /**
  * Draws content of a buffer encoded in either one
  * of Z image encodings.
+ * 
+ * @returns number of pixels written
 */
 size_t draw_z_image_chunk(FASTEPD& display,
                           uint8_t buffer[],

@@ -438,8 +438,8 @@ bool createHttpRequest(WiFiClient &client, bool &connStatus, bool checkTimestamp
                "&rssi=" + String(rssi) +
                "&ssid=" + ssid +
                "&v=" + String(d_volt) +
-               "&x=" + String(1600) +  // display width
-               "&y=" + String(1200) +  // display height
+               "&x=" + String(display.width()) +  // display width
+               "&y=" + String(display.height()) +  // display height
                "&c=" + String("8G") +  // the color type
                "&fw=" + String(firmware) +
                "&Sverio=" + String("ED133UT3") +
@@ -682,7 +682,7 @@ void print_error_reading(uint32_t bytes_read)
 /**
  * It does a http get request, parses the data and prints it on a display.
 */
-void readBitmapData(WiFiClient &client)
+size_t readBitmapData(WiFiClient &client)
 {
   // Let's read bitmap
   static const uint16_t input_buffer_pixels = 800; // may affect performance
@@ -715,13 +715,20 @@ void readBitmapData(WiFiClient &client)
   bool colored = false;
 
   uint32_t startTime = millis();
-  if ((x >= display.width()) || (y >= display.height())) return;
-  if (!createHttpRequest(client, connection_ok, false, "")) return;
+  if ((x >= display.width()) || (y >= display.height())) {
+    return 1;  // hacky
+  }
+  
+  if (!createHttpRequest(client, connection_ok, false, "")) {
+    return 1;  // hacky
+  }
 
   // Parse header
   uint16_t header = read16(client);
   Serial.print("Header ");
   Serial.println(header, HEX);
+
+  size_t pixels_written = 0;
 
   if (header == 0x4D42) // BMP signature
   {
@@ -983,8 +990,8 @@ void readBitmapData(WiFiClient &client)
     PixelPosition position;
 
     while (position.is_inside(display) && client.available()) {
-      client.readBytes(buffer, BUFSIZE_IMAGE_REQUEST);
-      bytes_read += draw_z_image_chunk(display, buffer, BUFSIZE_IMAGE_REQUEST, position, encoding);
+      bytes_read += client.readBytes(buffer, BUFSIZE_IMAGE_REQUEST);
+      pixels_written += draw_z_image_chunk(display, buffer, BUFSIZE_IMAGE_REQUEST, position, encoding);
     }
     Serial.print("Read: ");
     Serial.print(bytes_read / 1024);
@@ -994,6 +1001,7 @@ void readBitmapData(WiFiClient &client)
   Serial.print("loaded in ");
   Serial.print(millis() - startTime);
   Serial.println(" ms");
+  return pixels_written;
   
   // if (!valid)
   // {
@@ -1057,35 +1065,37 @@ void setup()
   // Successfully connected to Wi-Fi?
   if(notConnectedToAPCount == 0)
   {
-    Serial.println("PNGDRAW");
-    HTTPClient http_client;
-    uint8_t* png_raw = readPNG("", http_client);
-    int rc = png.openRAM(png_raw, 1000000, PNGDraw);
-    char szTemp[256];
-    if (rc == PNG_SUCCESS) {
-      sprintf(szTemp, "image specs: (%d x %d), %d bpp, pixel type: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType());
-      Serial.print(szTemp);
-      rc = png.decode(NULL, 0); // no private structure and skip CRC checking
-      png.close();
-    } else {
-      Serial.println("DECODING failed");
-    }
-    delete[] png_raw;
+    // Serial.println("PNGDRAW");
+    // HTTPClient http_client;
+    // uint8_t* png_raw = readPNG("", http_client);
+    // int rc = png.openRAM(png_raw, 1000000, PNGDraw);
+    // char szTemp[256];
+    // if (rc == PNG_SUCCESS) {
+    //   sprintf(szTemp, "image specs: (%d x %d), %d bpp, pixel type: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType());
+    //   Serial.print(szTemp);
+    //   rc = png.decode(NULL, 0); // no private structure and skip CRC checking
+    //   png.close();
+    // } else {
+    //   Serial.println("DECODING failed");
+    // }
+    // delete[] png_raw;
 
     
-    // // Do we need to update the screen?
-    // if (checkForNewTimestampOnServer(client))
-    // {
-    //   // Get that lovely bitmap and put it on your gorgeous grayscale ePaper screen!
-    //   timestamp = 0;
-    //   readBitmapData(client);
-    //   client.stop();
+    // Do we need to update the screen?
+    if (checkForNewTimestampOnServer(client))
+    {
+      // Get that lovely bitmap and put it on your gorgeous grayscale ePaper screen!
+      // timestamp = 0;
+      size_t pixels_written = readBitmapData(client);
+      client.stop();
 
-      unsigned long draw_start = millis();
-      display.fullUpdate(true);  // true -> fast update
-      Serial.print("drawn in "); Serial.print(millis() - draw_start); Serial.println(" ms");
-
-    // }
+      // do not update the display if picture is corrupted. 0 is temporary hack for BMP.
+      if (pixels_written == display.width() * display.height() || pixels_written == 0) {
+        unsigned long draw_start = millis();
+        display.fullUpdate(true);  // true -> fast update
+        Serial.print("drawn in "); Serial.print(millis() - draw_start); Serial.println(" ms");
+      }
+    }
   }
   else
   {
@@ -1103,9 +1113,9 @@ void setup()
   }
 
   // Deep sleep mode
-  Serial.print("Going to sleep now for (seconds): ");
+  Serial.print("Going to sleep now for (minutes): ");
   Serial.println(deepSleepTime);
-  esp_sleep_enable_timer_wakeup(deepSleepTime * 30 * 1000000);  // 30 seconds
+  esp_sleep_enable_timer_wakeup(deepSleepTime * 60 * 1000000);
   delay(100);
   esp_deep_sleep_start();
 }
