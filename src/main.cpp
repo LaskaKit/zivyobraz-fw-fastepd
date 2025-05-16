@@ -947,6 +947,7 @@ size_t draw_bmp(WiFiClient &client, bool c_ok)
     Serial.print("bytes read ");
     Serial.println(bytes_read);
   }
+  return drawn_pixels;
 }
 
 /**
@@ -1051,6 +1052,7 @@ void setup()
   display.initPanel(BB_PANEL_EPDIY_V7);
   display.setPanelSize(1600, 1200);
   display.setMode(BB_MODE_4BPP);
+  display.setRotation(180);
 
   Serial.begin(115200);
   Serial.println("Starting firmware for Zivy Obraz service");
