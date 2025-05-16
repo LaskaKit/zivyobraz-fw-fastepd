@@ -62,11 +62,11 @@ size_t draw_z1_image_chunk(FASTEPD& display,
         Z1Pixel px(buffer[i], buffer[i+1]);
         uint8_t mapped_color = px.color();  // TODO: color mapping for Z1
         for (size_t count = 0; count < px.count(); count++) {
+            drawn_pixels++;
+            display.drawPixelFast(position.x, position.y, mapped_color);
             if (!position.next(display)) {
                 return drawn_pixels;
             }
-            drawn_pixels++;
-            display.drawPixelFast(position.x, position.y, mapped_color);
         }
     }
     return drawn_pixels;
@@ -87,12 +87,12 @@ size_t draw_z2_image_chunk(FASTEPD& display,
         Z2Pixel px(buffer[i]);
         uint8_t mapped_color = map_color_from_z(px.color());
         for (size_t count = 0; count < px.count(); count++) {
-            // Serial.print(position.x); Serial.print(" "); Serial.println(position.y);
+            // Serial.print(position.x); Serial.print(" "); Serial.println(position.y)
+            drawn_pixels++;
+            display.drawPixelFast(position.x, position.y, mapped_color);
             if (!position.next(display)) {
                 return drawn_pixels;
             }
-            drawn_pixels++;
-            display.drawPixelFast(position.x, position.y, mapped_color);
         }
     }
     return drawn_pixels;
@@ -114,11 +114,11 @@ size_t draw_z3_image_chunk(FASTEPD& display,
         uint8_t mapped_color = map_color_from_z(px.color());
         for (size_t count = 0; count < px.count(); count++) {
             // Serial.print(position.x); Serial.print(" "); Serial.println(position.y);
+            drawn_pixels++;
+            display.drawPixelFast(position.x, position.y, mapped_color);
             if (!position.next(display)) {
                 return drawn_pixels;
             }
-            drawn_pixels++;
-            display.drawPixelFast(position.x, position.y, mapped_color);
         }
     }
     return drawn_pixels;
