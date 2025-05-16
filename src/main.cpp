@@ -680,8 +680,9 @@ void print_error_reading(uint32_t bytes_read)
 }
 
 
-void draw_bmp(WiFiClient &client, bool c_ok)
+size_t draw_bmp(WiFiClient &client, bool c_ok)
 {
+  size_t drawn_pixels = 0;
   bool connection_ok = c_ok;
 
  // Let's read bitmap
@@ -937,6 +938,7 @@ void draw_bmp(WiFiClient &client, bool c_ok)
 
           uint16_t yrow = y + (flip ? h - row - 1 : row);
           display.drawPixelFast(x + col, yrow, color);  // DRAWING HERE
+          drawn_pixels++;
           Serial.println(color);
         } // end col
       } // end row
@@ -964,11 +966,11 @@ size_t readBitmapData(WiFiClient &client)
   Serial.print("Header ");
   Serial.println(header, HEX);
 
-  size_t pixels_written = 0;
+  size_t drawn_pixels = 0;
 
   if (header == 0x4D42) // BMP signature
   {
-    draw_bmp(client, connection_ok);
+    drawn_pixels = draw_bmp(client, connection_ok);
   }
   else if (header == 0x315A || header == 0x325A || header == 0x335A) // ZivyObraz RLE data Z1 or Z3
   {
@@ -996,25 +998,26 @@ size_t readBitmapData(WiFiClient &client)
 
     while (position.is_inside(display) && client.available()) {
       bytes_read += client.readBytes(buffer, BUFSIZE_IMAGE_REQUEST);
-      pixels_written += draw_z_image_chunk(display, buffer, BUFSIZE_IMAGE_REQUEST, position, encoding);
+      drawn_pixels += draw_z_image_chunk(display, buffer, BUFSIZE_IMAGE_REQUEST, position, encoding);
     }
     Serial.print("Read: ");
     Serial.print(bytes_read / 1024);
     Serial.println(" Kb");
   }
+  else {
+    Serial.print("Invalid format. Header: ");
+    Serial.println(header);
+    Serial.print("Setting deepSleepTime to minutes: ");
+    Serial.println(deepSleepTime);
+    deepSleepTime = defaultDeepSleepTime;
+    timestamp = 0;
+    return 0;
+  }
 
   Serial.print("loaded in ");
   Serial.print(millis() - startTime);
   Serial.println(" ms");
-  return pixels_written;
-  
-  // if (!valid)
-  // {
-  //   Serial.print("Format not handled, got: ");
-  //   Serial.println(header);
-  //   deepSleepTime = defaultDeepSleepTime;
-  //   timestamp = 0;
-  // }
+  return drawn_pixels;
 }
 
 void testDraw()
@@ -1095,8 +1098,8 @@ void setup()
       client.stop();
       // Serial.print("Pixels writen: "); Serial.println(pixels_written);
 
-      // do not update the display if picture is corrupted. 0 is temporary hack for BMP.
-      if (pixels_written == display.width() * display.height() || pixels_written == 0) {
+      // do not update the display if picture is corrupted.
+      if (pixels_written == display.width() * display.height()) {
         unsigned long draw_start = millis();
         display.fullUpdate(true);  // true -> fast update
         Serial.print("drawn in "); Serial.print(millis() - draw_start); Serial.println(" ms");
