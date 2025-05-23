@@ -1,3 +1,6 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
 #include <FastEPD.h>
 #include <HTTPClient.h>
 
@@ -126,3 +129,6 @@ size_t draw_z3_image_chunk(FASTEPD& display,
 
 
 uint8_t* readPNG(String url, HTTPClient& client);
+
+
+#endif  // UTILS_HPP

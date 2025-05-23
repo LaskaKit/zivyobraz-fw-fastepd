@@ -26,14 +26,6 @@
 // Uncomment for correct board
 /////////////////////////////////
 
-//#define ESPink_V2
-//#define ESPink_V3
-//#define ESP32S3Adapter
-//#define ES3ink
-//#define MakerBadge_revB // also works with A and C
-//#define MakerBadge_revD
-//#define REMAP_SPI
-//#define TTGO_T5_v23 // tested only with 2.13" variant
 
 //////////////////////////////////////////////////////////////
 // Uncomment if one of the sensors will be connected
@@ -41,16 +33,6 @@
 //////////////////////////////////////////////////////////////
 
 //#define SENSOR
-
-//////////////////////////////////////////////////////////////
-// Uncomment correct color capability of your ePaper display
-//////////////////////////////////////////////////////////////
-
-//#define TYPE_BW // black and white
-//#define TYPE_3C // 3 colors - black, white and red/yellow
-//#define TYPE_4C // 4 colors - black, white, red and yellow
-//#define TYPE_GRAYSCALE // grayscale - 4 colors
-//#define TYPE_7C // 7 colors
 
 ///////////////////////////////////////////////
 // That's all!
@@ -75,11 +57,6 @@ PNG png;
 // Library etc. includes
 ////////////////////////////
 
-// // M5Stack CoreInk
-// #ifdef M5StackCoreInk
-//   #include <M5CoreInk.h>
-// #endif
-
 // WiFi
 #include <WiFi.h>
 #include <WiFiManager.h>
@@ -91,64 +68,6 @@ ESP32AnalogRead adc;
 
 #include <QRCodeGenerator.h>
 QRCode qrcode;
-
-// // TWI/I2C library
-// #include <Wire.h>
-
-// #ifdef ES3ink
-//   #include <Adafruit_NeoPixel.h>
-//   Adafruit_NeoPixel pixel(1, RGBledPin, NEO_GRB + NEO_KHZ800);
-// #endif
-
-// // Supported sensors
-// #ifdef SENSOR
-//   // SHT40/41/45
-//   #include "Adafruit_SHT4x.h"
-// Adafruit_SHT4x sht4 = Adafruit_SHT4x();
-
-//   // SCD40/41
-//   #include "SparkFun_SCD4x_Arduino_Library.h"
-// SCD4x SCD4(SCD4x_SENSOR_SCD41);
-
-//   // BME280
-//   #include <Adafruit_Sensor.h>
-//   #include <Adafruit_BME280.h>
-// Adafruit_BME280 bme;
-// #endif
-
-// /* ---- ADC reading - indoor Battery voltage ---- */
-// #ifdef ES3ink
-//   #define vBatPin ADC1_GPIO2_CHANNEL
-//   #define dividerRatio 2.018
-
-// #elif defined M5StackCoreInk
-//   #define vBatPin 35
-
-// #elif defined MakerBadge_revB
-//   #define vBatPin 6
-//   #define BATT_V_CAL_SCALE 1.00
-
-// #elif defined MakerBadge_revD
-//   #define vBatPin 6
-//   #define BATT_V_CAL_SCALE 1.05
-
-// #elif defined TTGO_T5_v23
-//   #define vBatPin 35
-
-// #elif defined ESP32S3Adapter
-//   ESP32AnalogRead adc;
-//   #define vBatPin ADC1_GPIO9_CHANNEL  
-//   #define dividerRatio 2.018
-
-// #elif defined ESPink_V3
-//   #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h>
-//   SFE_MAX1704X lipo(MAX1704X_MAX17048);
-
-// #else
-//   ESP32AnalogRead adc;
-//   #define vBatPin 34
-//   #define dividerRatio 1.769
-// #endif
 
 /* ---- Server Zivy obraz ----------------------- */
 const char *host = "cdn.zivyobraz.eu";
@@ -570,57 +489,6 @@ bool createHttpRequest(WiFiClient &client, bool &connStatus, bool checkTimestamp
 
   return true;
 }
-
-#ifdef SENSOR
-int readSensorsVal(float &sen_temp, int &sen_humi, int &sen_pres)
-{
-  // Check for SHT40 OR SHT41 OR SHT45
-  if (sht4.begin())
-  {
-    Serial.println("SHT4x FOUND");
-    sht4.setPrecision(SHT4X_LOW_PRECISION);
-    sht4.setHeater(SHT4X_NO_HEATER);
-
-    sensors_event_t hum, temp;
-    sht4.getEvent(&hum, &temp);
-
-    sen_temp = temp.temperature;
-    sen_humi = hum.relative_humidity;
-    return 1;
-  }
-
-  // Check for BME280
-  if (bme.begin())
-  {
-    Serial.println("BME280 FOUND");
-
-    sen_temp = bme.readTemperature();
-    sen_humi = bme.readHumidity();
-    sen_pres = bme.readPressure() / 100.0F;
-    return 2;
-  }
-
-  // Check for SCD40 OR SCD41
-  if (SCD4.begin(false, true, false))
-  {
-    Serial.println("SCD4x FOUND");
-    SCD4.measureSingleShot();
-
-    while (SCD4.readMeasurement() == false) // wait for a new data (approx 30s)
-    {
-      Serial.println("Waiting for first measurement...");
-      delay(1000);
-    }
-
-    sen_temp = SCD4.getTemperature();
-    sen_humi = SCD4.getHumidity();
-    sen_pres = SCD4.getCO2();
-    return 3;
-  }
-
-  return 0;
-}
-#endif
 
 /**
  * Internally calls createHttpRequest function.
