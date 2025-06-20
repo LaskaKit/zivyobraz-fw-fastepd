@@ -45,13 +45,11 @@
 
 #include <utils.hpp>
 #include <FastEPD.h>
-#include <PNGdec.h>
 
 #include <fonts/OpenSansSB_24px.h>
 
 #define BUFSIZE_IMAGE_REQUEST 4096
 FASTEPD display;
-PNG png;
 
 ////////////////////////////
 // Library etc. includes
@@ -361,7 +359,6 @@ bool createHttpRequest(WiFiClient &client, bool &connStatus, bool checkTimestamp
                "&y=" + String(display.height()) +  // display height
                "&c=" + String("8G") +  // the color type
                "&fw=" + String(firmware) +
-               "&Sverio=" + String("ED133UT3") +
                "&ap_retries=" + String(notConnectedToAPCount) +
                extraParams;
 
@@ -583,9 +580,8 @@ size_t draw_bmp(WiFiClient &client, bool c_ok)
   bool colored = false;
 
   //#include <pgmspace.h>
-  uint32_t fileSize = read32(client);
-  uint32_t creatorBytes = read32(client);
-  (void)creatorBytes; // unused
+  read32(client);  // file size
+  read32(client);  // creator bytes unused
   uint32_t imageOffset = read32(client); // Start of image data
   uint32_t headerSize = read32(client);
   uint32_t width = read32(client);
@@ -594,20 +590,21 @@ size_t draw_bmp(WiFiClient &client, bool c_ok)
   uint16_t depth = read16(client); // bits per pixel
   uint32_t format = read32(client);
   uint32_t bytes_read = 7 * 4 + 3 * 2; // read so far
+
   if ((planes == 1) && ((format == 0) || (format == 3))) // uncompressed is handled, 565 also
   {
-    Serial.print("File size: ");
-    Serial.println(fileSize);
-    Serial.print("Image Offset: ");
-    Serial.println(imageOffset);
-    Serial.print("Header size: ");
-    Serial.println(headerSize);
-    Serial.print("Bit Depth: ");
-    Serial.println(depth);
-    Serial.print("Image size: ");
-    Serial.print(width);
-    Serial.print('x');
-    Serial.println(height);
+    // Serial.print("File size: ");
+    // Serial.println(fileSize);
+    // Serial.print("Image Offset: ");
+    // Serial.println(imageOffset);
+    // Serial.print("Header size: ");
+    // Serial.println(headerSize);
+    // Serial.print("Bit Depth: ");
+    // Serial.println(depth);
+    // Serial.print("Image size: ");
+    // Serial.print(width);
+    // Serial.print('x');
+    // Serial.println(height);
     // BMP rows are padded (if needed) to 4-byte boundary
     uint32_t rowSize = (width * depth / 8 + 3) & ~3;
     if (depth < 8) rowSize = ((width * depth + 8 - depth) / 8 + 3) & ~3;
@@ -805,16 +802,17 @@ size_t draw_bmp(WiFiClient &client, bool c_ok)
           }
 
           uint16_t yrow = y + (flip ? h - row - 1 : row);
-          display.drawPixelFast(x + col, yrow, color);  // DRAWING HERE
+          // display.drawPixelFast(x + col, yrow, color);  // DRAWING HERE
+          display.drawPixelFast(x + col, yrow, 0x0);  // DRAWING HERE
           drawn_pixels++;
-          Serial.println(color);
         } // end col
       } // end row
-      display.fullUpdate();
     } // end block
     Serial.print("bytes read ");
     Serial.println(bytes_read);
   }
+
+  Serial.print("testos test");
   return drawn_pixels;
 }
 
@@ -839,7 +837,12 @@ size_t readBitmapData(WiFiClient &client)
 
   if (header == 0x4D42) // BMP signature
   {
-    drawn_pixels = draw_bmp(client, connection_ok);
+    Serial.println("Got format BMP, processing");
+    display.clearWhite();
+    display.drawString("BMP not supported (yet)", 10, 10);
+    display.drawString("Use one of Z formats.", 10, 50);
+    return display.width() * display.height();
+    // drawn_pixels = draw_bmp(client, connection_ok);
   }
   else if (header == 0x315A || header == 0x325A || header == 0x335A) // ZivyObraz RLE data Z1 or Z3
   {
@@ -889,42 +892,26 @@ size_t readBitmapData(WiFiClient &client)
   return drawn_pixels;
 }
 
-void testDraw()
-{
-  for (int row = 0; row < 1200; row++) {
-    for (int col = 0; col < 1200; col++) {
-      if (abs(row - col) < 50) {
-        display.drawPixelFast(row, col, 0x0);
-      }
-    }
-  }
-}
-
-void PNGDraw(PNGDRAW *pDraw)
-{
-  if (pDraw->iPixelType == PNG_PIXEL_GRAYSCALE && pDraw->iBpp == 8) {
-    // Serial.println("Grayscale PNG");
-    // Serial.println(pDraw->y);
-    // Serial.println(pDraw->iWidth);
-    // Serial.println(pDraw->iPitch);
-    // Serial.println(pDraw->iBpp);
-
-    for (size_t x = 0; x < pDraw->iWidth; x++) {
-      display.drawPixelFast(x, pDraw->y, pDraw->pPixels[x] / 16);
-    }
-  }
-} /* PNGDraw() */
 
 void setup()
 {
-  display.initPanel(BB_PANEL_EPDIY_V7);
-  display.setPanelSize(1600, 1200);
-  display.setMode(BB_MODE_4BPP);
-  display.setRotation(180);
-
   Serial.begin(115200);
+  // delay(2000);
   Serial.println("Starting firmware for Zivy Obraz service");
   
+
+  // EPDiy v7
+  // display.initPanel(BB_PANEL_V7);
+  // display.setPanelSize(1600, 1200);
+
+  // raw EPDiy v7
+  display.initPanel(BB_PANEL_V7_RAW);
+  display.setPanelSize(1280, 720, BB_PANEL_FLAG_MIRROR_Y);
+  
+  display.setMode(BB_MODE_4BPP);
+  
+  // display.setRotation(180);
+
   // Battery voltage measurement
   d_volt = getBatteryVoltage();
   // Wifi init
@@ -943,22 +930,6 @@ void setup()
   // Successfully connected to Wi-Fi?
   if(notConnectedToAPCount == 0)
   {
-    // Serial.println("PNGDRAW");
-    // HTTPClient http_client;
-    // uint8_t* png_raw = readPNG("", http_client);
-    // int rc = png.openRAM(png_raw, 1000000, PNGDraw);
-    // char szTemp[256];
-    // if (rc == PNG_SUCCESS) {
-    //   sprintf(szTemp, "image specs: (%d x %d), %d bpp, pixel type: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType());
-    //   Serial.print(szTemp);
-    //   rc = png.decode(NULL, 0); // no private structure and skip CRC checking
-    //   png.close();
-    // } else {
-    //   Serial.println("DECODING failed");
-    // }
-    // delete[] png_raw;
-
-    
     // Do we need to update the screen?
     if (checkForNewTimestampOnServer(client))
     {
@@ -971,7 +942,7 @@ void setup()
       // do not update the display if picture is corrupted.
       if (pixels_written == display.width() * display.height()) {
         unsigned long draw_start = millis();
-        display.fullUpdate(true);  // true -> fast update
+        display.fullUpdate();  // true -> fast update
         Serial.print("drawn in "); Serial.print(millis() - draw_start); Serial.println(" ms");
       }
     }

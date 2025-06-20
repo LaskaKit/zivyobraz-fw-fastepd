@@ -128,7 +128,4 @@ size_t draw_z3_image_chunk(FASTEPD& display,
 
 
 
-uint8_t* readPNG(String url, HTTPClient& client);
-
-
 #endif  // UTILS_HPP
